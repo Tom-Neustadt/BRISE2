@@ -3,7 +3,7 @@ import logging
 
 def test(task: dict):
     import random
-    return {'Y1': random.random(), 'Y2': random.random(), 'Y3': random.random(), 'Y4': random.random(), 'Y5': random.random()}
+    return {'Y1': random.uniform(0, 100)}
 
 
 def energy_consumption(task: dict):

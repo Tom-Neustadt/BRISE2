@@ -7,3 +7,4 @@ outliers/__pycache__
 outliers/.cache
 outliers/tests/__pycache__
 Log/
+selftesting_instance.json
