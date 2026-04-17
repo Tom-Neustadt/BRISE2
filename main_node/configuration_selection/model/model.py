@@ -254,7 +254,9 @@ class Model:
 
         contains_scalarized_surrogate = any([s.scalarized for s in created_surrogates])
         if not contains_scalarized_surrogate:
-            names_and_objectives = [r.name for r in self.region] + [o for o in self.objectives.keys()]
+            # commented code below istemporary fix for objectives with same name appearing in configuration(one of each objective for each region)
+            # TODO: fix permanently(keeping all objective vales)
+            names_and_objectives = [r.name for r in self.region]# + [o for o in self.objectives.keys()]
         else:
             names_and_objectives = [r.name for r in self.region] + ["Y"]
 

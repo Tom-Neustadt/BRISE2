@@ -3,7 +3,7 @@ from __future__ import annotations
 import pickle
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import Dict, Iterable, List, Set, MutableMapping, Union, Tuple
+from typing import Dict, Iterable, List, Literal, Set, MutableMapping, Union, Tuple
 import numpy as np
 import pandas as pd
 
@@ -55,11 +55,14 @@ class Hyperparameter(ABC):
     def __init__(self,
                  name: str,
                  level: int,
+                 disable: str|None = None,
                  parent: Hyperparameter = None,
                  activation_category: _CATEGORY = None):
         self.name = name
         self.configuration_number = 0
         self.level = level  # level within the search space
+        # represeants boolean expression of caregories in DNF
+        self.disable: list[tuple[list[str], list[str]]] = boolean_expression_to_datastructure(disable) if disable else []
         self.parent = parent
         self.type = None
         self.activation_category = activation_category  # category activating this parameter
@@ -152,15 +155,19 @@ class CategoricalHyperparameter(Hyperparameter, ABC):
                  level: int,
                  categories: Iterable[_CATEGORY],
                  default_value: _CATEGORY = None,
+                 disable: str|None = None,
                  parent: Hyperparameter = None,
                  activation_category: _CATEGORY = None
                  ):
-        super().__init__(name, level, parent, activation_category)
+        super().__init__(name, level, disable, parent, activation_category)
 
         # Each category could 'activate' children, so list of activated children is 'behind' each category.
         self._categories: MutableMapping[_CATEGORY, List[Hyperparameter]] = OrderedDict({cat: [] for cat in categories})
 
         self._default_value = default_value or list(self._categories)[len(self._categories) // 2]
+
+        self._category_disable: MutableMapping[_CATEGORY, list[tuple[list[str], list[str]]]] = OrderedDict({cat: [] for cat in categories})
+        self._category_forced: MutableMapping[_CATEGORY, list[tuple[list[str], list[str]]]] = OrderedDict({cat: [] for cat in categories})
 
     @property
     def categories(self):
@@ -184,6 +191,18 @@ class CategoricalHyperparameter(Hyperparameter, ABC):
             raise ValueError(f"{self.name}: Hyperparameter {other} was already added as child for {category} category.")
         else:
             self._categories[category].append(other)
+
+    def add_category_restriction(self, category: _CATEGORY, boolean_expression: str, restriction_type: Literal["Disable"]|Literal["Forced"] = "Disable"):
+        if category not in self._categories:
+            raise ValueError(f"{self.name}: category {category} does not exist.")
+        else:
+            boolean_expression: list[tuple[list[str], list[str]]] = boolean_expression_to_datastructure(boolean_expression)
+            if restriction_type == "Disable":
+                self._category_disable[category] = boolean_expression
+            elif restriction_type == "Forced":
+                self._category_forced[category] = boolean_expression
+            else:
+                raise ValueError(f"{self.name}: restriction type {restriction_type} is not supported. Use 'Disable' or 'Forced'.")
 
     def get_children(self) -> List[Hyperparameter]:
         children: List[Hyperparameter] = []
@@ -281,9 +300,10 @@ class NumericHyperparameter(Hyperparameter, ABC):
                  lower: Union[int, float],
                  upper: Union[int, float],
                  default_value: Union[int, float] = None,
+                 disable: str|None = None,
                  parent: Hyperparameter = None,
                  activation_category: _CATEGORY = None):
-        super().__init__(name, level, parent, activation_category)
+        super().__init__(name, level, disable, parent, activation_category)
 
         self._lower = lower
         self._upper = upper
@@ -345,10 +365,11 @@ class IntegerHyperparameter(NumericHyperparameter):
                  lower: Union[int, float],
                  upper: Union[int, float],
                  default_value: Union[int, float] = None,
+                 disable: str|None = None,
                  parent: Hyperparameter = None,
                  activation_category: _CATEGORY = None):
         default_value = default_value or (upper - lower) // 2
-        super().__init__(name, level, int(lower), int(upper), default_value, parent, activation_category)
+        super().__init__(name, level, int(lower), int(upper), default_value, disable, parent, activation_category)
         self.type = "Integer"
 
     def get_size(self) -> Union[int, np.inf]:
@@ -372,10 +393,11 @@ class FloatHyperparameter(NumericHyperparameter):
                  lower: Union[int, float],
                  upper: Union[int, float],
                  default_value: Union[int, float] = None,
+                 disable: str|None = None,
                  parent: Hyperparameter = None,
                  activation_category: _CATEGORY = None):
         default_value = default_value or (upper - lower) / 2
-        super().__init__(name, level, float(lower), float(upper), default_value, parent, activation_category)
+        super().__init__(name, level, float(lower), float(upper), default_value, disable, parent, activation_category)
         self.type = "Float"
 
     def get_size(self) -> Union[int, np.inf]:
@@ -397,10 +419,11 @@ class OrdinalHyperparameter(CategoricalHyperparameter):
                  level: int,
                  categories: Iterable[_CATEGORY],
                  default_value: _CATEGORY = None,
+                 disable: str|None = None,
                  parent: Hyperparameter = None,
                  activation_category: _CATEGORY = None
                  ):
-        super().__init__(name, level, categories, default_value, parent, activation_category)
+        super().__init__(name, level, categories, default_value, disable, parent, activation_category)
         self.type = "Ordinal"
 
     def __eq__(self, other: OrdinalHyperparameter):
@@ -426,10 +449,11 @@ class NominalHyperparameter(CategoricalHyperparameter):
                  level: int,
                  categories: Iterable[_CATEGORY],
                  default_value: _CATEGORY = None,
+                 disable: str|None = None,
                  parent: Hyperparameter = None,
                  activation_category: _CATEGORY = None
                  ):
-        super().__init__(name, level, categories, default_value, parent, activation_category)
+        super().__init__(name, level, categories, default_value, disable, parent, activation_category)
         self.type = "Nominal"
 
     def __eq__(self, other: NominalHyperparameter):
@@ -485,7 +509,7 @@ class SearchSpace:
         self.hp_names = sum([[hp.name for hp in r]for r in self.regions], [])
 
     def reset_level(self):
-        self.current_level.append(self.search_space_description)
+        self.current_level = [self.search_space_description]
         self.next_level()
 
     def next_level(self):
@@ -505,13 +529,14 @@ class SearchSpace:
         return regions
 
     def activate_regions(self, parent: pd.DataFrame) -> Set[Tuple[Hyperparameter]]:
+        # get all columns that are hp_names
         parent = parent.drop(columns=parent.columns.difference(self.hp_names))
         available_regions = self.get_regions_on_current_level()
         activated_regions = set()
         for r in available_regions:
             for hp in r:
                 for p in parent.to_numpy().flatten():
-                    if type(p) is str:
+                    if type(p) is str: # only categorical parameters (and hp names) have string values
                         if hp.activation_category in p:
                             activated_regions.add(r)
         return activated_regions
@@ -598,17 +623,20 @@ class SearchSpace:
         h_name: str = name
         h_type: str = hyperparameter_description["Type"]
         level: int = hyperparameter_description["Level"]
+        disable:  str|None = hyperparameter_description.get("Disable", None)
 
         default_value = hyperparameter_description["Default"]
 
         if h_type in ("NominalHyperparameter", "OrdinalHyperparameter"):
             categories: List[_CATEGORY] = hyperparameter_description["Categories"]
 
+
             if h_type == "NominalHyperparameter":
                 h = NominalHyperparameter(name=h_name,
                                           level=level,
                                           categories=categories,
                                           default_value=default_value,
+                                          disable=disable,
                                           parent=parent,
                                           activation_category=activation_category)
             else:
@@ -616,6 +644,7 @@ class SearchSpace:
                                           level=level,
                                           categories=categories,
                                           default_value=default_value,
+                                          disable=disable,
                                           parent=parent,
                                           activation_category=activation_category)
 
@@ -624,7 +653,11 @@ class SearchSpace:
                 # derive category name from the absolute path
                 relative_name = c.split(".")[-1]
                 for hp in hyperparameter_description[relative_name].keys():
-                    if hp != "Type":
+                    if hp == "Disable":
+                        h.add_category_restriction(c, hyperparameter_description[relative_name][hp], restriction_type="Disable")
+                    elif hp == "Forced":
+                        h.add_category_restriction(c, hyperparameter_description[relative_name][hp], restriction_type="Forced")
+                    elif hp != "Type":
                         child = self._inner_init(hyperparameter_description[relative_name][hp], hp, h, c)
                         h.add_child_hyperparameter(child, c)
 
@@ -637,16 +670,18 @@ class SearchSpace:
                                           lower=lower_bound,
                                           upper=upper_bound,
                                           default_value=default_value,
+                                          disable=disable,
                                           parent=parent,
                                           activation_category=activation_category)
             else:
                 h = FloatHyperparameter(name=h_name,
-                                        level=level,
-                                        lower=lower_bound,
-                                        upper=upper_bound,
-                                        default_value=default_value,
-                                        parent=parent,
-                                        activation_category=activation_category)
+                                          level=level,
+                                          lower=lower_bound,
+                                          upper=upper_bound,
+                                          default_value=default_value,
+                                          disable=disable,
+                                          parent=parent,
+                                          activation_category=activation_category)
 
         else:
             import logging
@@ -697,3 +732,23 @@ def get_search_space_record(search_space: SearchSpace, experiment_id: str) -> Di
         "SearchspaceObject": pickle.dumps(search_space)
     }
     return record
+
+def boolean_expression_to_datastructure(boolean_expression: str) -> list[tuple[list[str], list[str]]]:
+    boolean_expression = boolean_expression.replace(" and ", " && ").replace(" or ", " || ").replace(" not ", " !")
+    disjuncts = []
+    for disjunct in boolean_expression.split(" || "):
+        disjunct = disjunct.strip()
+        if disjunct.startswith("(") and disjunct.endswith(")"):
+            disjunct = disjunct[1:-1].strip()
+        if disjunct:
+            conjunct = ([],[])
+            for literal in disjunct.split(" && "):
+                literal = literal.strip()
+                if literal.startswith("(") and literal.endswith(")"):
+                    literal = literal[1:-1].strip()
+                if literal.startswith("!"):
+                    conjunct[1].append(literal[1:])
+                else:
+                    conjunct[0].append(literal)
+            disjuncts.append(conjunct)
+    return disjuncts

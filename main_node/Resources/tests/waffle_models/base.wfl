@@ -3,11 +3,14 @@
 abstract Hyperparameter {
   Type -> predefined
   Level -> integer
+  Disabled? -> string ? //boolean expression of Categories(of lower levels) in DNF; if true: HP is unavailable
   [if gcard.Context.SearchSpace.Structure == Flat then Level == 0]
 }
 
 abstract Category {
   Type -> predefined
+  Disabled -> string ? //boolean expression of Categories(of lower levels) in DNF; if true: Category is unavailable
+  Forced -> string ? //boolean expression of Categories(of lower levels) in DNF; if true: Value of HP must be this Category
   [Type = "Category"]
 }
 
@@ -134,9 +137,7 @@ ConfigurationSelection {
           Scalar  {
             [self requires parent.parent.parent.Surrogate.ValueTransformers]
             [self requires parent.parent.parent.Surrogate.ValueTransformers.ValueScalarizator]
-            [fcard.parent.parent.parent.Surrogate = 1]
             [fcard.parent.parent.parent.Surrogate.ValueTransformers = 1]
-            [fcard.parent.parent.parent.Optimizer = 1]
             [fcard.parent.parent.parent.Validator.InternalValidator = 0]
           }
           Pure {
@@ -148,8 +149,6 @@ ConfigurationSelection {
             [self excludes parent.parent.parent.Surrogate.Instance.MultiArmedBandit]
             [self excludes parent.parent.parent.Surrogate.Instance.TreeParzenEstimator]
             [self excludes parent.parent.parent.Surrogate.Instance.MultiLayerPerceptronRegressor]
-            [fcard.parent.parent.parent.Surrogate = 1]
-            [fcard.parent.parent.parent.Optimizer = 1]
             [fcard.parent.parent.parent.Validator.InternalValidator = 0]
           }
           Compositional {
@@ -159,20 +158,20 @@ ConfigurationSelection {
           }
           DynamicCompositional {
             [self excludes parent.parent.parent.Surrogate.Instance.TreeParzenEstimator]
-            [fcard.parent.parent.parent.Optimizer = 1]
+            [fcard.parent.parent.parent.Surrogate = "+"]
             [fcard.parent.parent.parent.Validator.InternalValidator = 1]
           }
           Portfolio {
             [self excludes parent.parent.parent.CandidateSelector.BestMultiPointProposal]
             [self excludes parent.parent.parent.Surrogate.ValueTransformers.ValueScalarizator]
             [self excludes parent.parent.parent.Surrogate.Instance.TreeParzenEstimator]
-            [fcard.parent.parent.parent.Optimizer = 1]
+            [fcard.parent.parent.parent.Surrogate = "+"]
             [fcard.parent.parent.parent.Validator.InternalValidator = 1]
           }
         }
       }
 // --------------------------Surrogate---------------------------
-      Surrogate * {
+      Surrogate {
         or ConfigurationTransformers ? {
           xor OrdinalTransformer {
             SklearnOrdinalEncoder {
@@ -389,7 +388,7 @@ ConfigurationSelection {
         }
       }
 // --------------------------Optimizer---------------------------
-      Optimizer * {
+      Optimizer {
         or ConfigurationTransformers ? {
           xor OrdinalTransformer {
             SklearnOrdinalEncoder {
