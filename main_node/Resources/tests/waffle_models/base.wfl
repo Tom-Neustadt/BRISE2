@@ -104,6 +104,7 @@ Context {
     xor Structure {
       Flat
       Hierarchical
+      Constrained
     }
     [fcard.ConfigurationSelection.Predictor.Model = size unique Level at self]
   }

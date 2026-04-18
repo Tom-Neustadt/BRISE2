@@ -62,7 +62,7 @@ class Hyperparameter(ABC):
         self.configuration_number = 0
         self.level = level  # level within the search space
         # represeants boolean expression of caregories in DNF
-        self.disable: list[tuple[list[str], list[str]]] = boolean_expression_to_datastructure(disable) if disable else []
+        self.disable: Constraint | None = Constraint(disable) if disable is not None else None
         self.parent = parent
         self.type = None
         self.activation_category = activation_category  # category activating this parameter
@@ -99,7 +99,20 @@ class Hyperparameter(ABC):
             :param other: Hyperparameter
             :return: boolean
         """
-        return self.parent.__eq__(other.parent) and self.activation_category.__eq__(other.activation_category)
+        return self.parent.__eq__(other.parent) and self.activation_category.__eq__(other.activation_category) and self.level == other.level
+    
+    def check_enabled(self, configuration: dict[str, _CATEGORY]) -> bool:
+        """
+        Only for constrained Search Space!
+        Check whether current Hyperparameter is enabled based on the provided configuration.
+        :param configuration: mapping of Hyperparameter name to its value.
+        :return: boolean
+        """
+        if self.disable is not None and self.disable.is_satisfied(configuration):
+            return False
+        if self.parent is not None and self.activation_category is not None:
+            return configuration.get(self.parent.name) == self.activation_category
+        return True
 
     #   --- Set of methods to operate the structure of the Search Space
     @abstractmethod
@@ -166,12 +179,13 @@ class CategoricalHyperparameter(Hyperparameter, ABC):
 
         self._default_value = default_value or list(self._categories)[len(self._categories) // 2]
 
-        self._category_disable: MutableMapping[_CATEGORY, list[tuple[list[str], list[str]]]] = OrderedDict({cat: [] for cat in categories})
-        self._category_forced: MutableMapping[_CATEGORY, list[tuple[list[str], list[str]]]] = OrderedDict({cat: [] for cat in categories})
+        self._category_disable: MutableMapping[_CATEGORY, Constraint|None] = OrderedDict({})
+        self._category_forced: MutableMapping[_CATEGORY, Constraint|None] = OrderedDict({})
+        self.enabled_categories: Set[_CATEGORY] = set(categories)
 
     @property
     def categories(self):
-        return tuple(self._categories.keys())
+        return tuple(self.enabled_categories)
 
     def add_child_hyperparameter(self,
                                  other: Hyperparameter,
@@ -192,17 +206,40 @@ class CategoricalHyperparameter(Hyperparameter, ABC):
         else:
             self._categories[category].append(other)
 
-    def add_category_restriction(self, category: _CATEGORY, boolean_expression: str, restriction_type: Literal["Disable"]|Literal["Forced"] = "Disable"):
+    def add_category_constraint(self, category: _CATEGORY, boolean_expression: str, constraint_type: Literal["Disable"]|Literal["Forced"] = "Disable"):
         if category not in self._categories:
             raise ValueError(f"{self.name}: category {category} does not exist.")
         else:
-            boolean_expression: list[tuple[list[str], list[str]]] = boolean_expression_to_datastructure(boolean_expression)
-            if restriction_type == "Disable":
-                self._category_disable[category] = boolean_expression
-            elif restriction_type == "Forced":
-                self._category_forced[category] = boolean_expression
+            constraint: Constraint = Constraint(boolean_expression)
+            if constraint_type == "Disable":
+                self._category_disable[category] = constraint
+            elif constraint_type == "Forced":
+                self._category_forced[category] = constraint
             else:
-                raise ValueError(f"{self.name}: restriction type {restriction_type} is not supported. Use 'Disable' or 'Forced'.")
+                raise ValueError(f"{self.name}: constraint type {constraint_type} is not supported. Use 'Disable' or 'Forced'.")
+
+    def check_enabled(self, configuration: dict[str, _CATEGORY]) -> bool:
+        """
+        Only for constrained Search Space!
+        Check whether current Hyperparameter is enabled based on the provided configuration.
+        Additionaly, adapts enabled categories based on the provided configuration and constraints.
+        :param configuration: mapping of Hyperparameter name to its value.
+        :return: boolean
+        """
+        if not super().check_enabled(configuration):
+            return False
+        if self._category_forced:
+            for category, constraint in self._category_forced.items():
+                if constraint.is_satisfied(configuration):
+                    self.enabled_categories = {category}
+                    return True
+        self.enabled_categories = set(self._categories.keys())
+        if self._category_disable:
+            for category, constraint in self._category_disable.items():
+                if constraint.is_satisfied(configuration):
+                    self.enabled_categories.discard(category)
+        return True
+        
 
     def get_children(self) -> List[Hyperparameter]:
         children: List[Hyperparameter] = []
@@ -477,10 +514,40 @@ class NominalHyperparameter(CategoricalHyperparameter):
     def __hash__(self):
         return super.__hash__(self)
 
+class Constraint:
+    def __init__(self, boolean_expression):
+        self.constraint: list[tuple[list[tuple[str, str]], list[tuple[str, str]]]] = []
+        self._inner_innit(boolean_expression)
+    
+    def _inner_innit(self, boolean_expression: str):
+        boolean_expression = boolean_expression.replace(" and ", " && ").replace(" or ", " || ").replace(" not ", " !")
+        for disjunct in boolean_expression.split(" || "):
+            disjunct = disjunct.strip()
+            if disjunct.startswith("(") and disjunct.endswith(")"):
+                disjunct = disjunct[1:-1].strip()
+            if disjunct:
+                conjunct = ([],[])
+                for literal in disjunct.split(" && "):
+                    literal = literal.strip()
+                    if literal.startswith("(") and literal.endswith(")"):
+                        literal = literal[1:-1].strip()
+                    if literal.startswith("!"):
+                        conjunct[1].append(literal[1:].split(".")[-2], literal[1:])
+                    else:
+                        conjunct[0].append(literal.split(".")[-2], literal)
+                self.constraint.append(conjunct)
+    
+    def is_satisfied(self, parameters: dict[str, _CATEGORY]) -> bool:
+        for disjunct in self.constraint:
+            if all(parameters.get(literal[0]) == literal[1] for literal in disjunct[0]) and \
+                      not any(parameters.get(literal[0]) == literal[1] for literal in disjunct[1]):
+                return True
+        return False
 
 class SearchSpace:
     def __init__(self, h: dict):
         self.is_flat = False
+        self.has_constraints = False
         self.hierarchical_view = self.initialize_hierarchical_view(h)
         self.flat_view = self.initialize_flat_view()
         self.number_of_levels = self.__get_number_of_levels()
@@ -490,15 +557,18 @@ class SearchSpace:
             self.search_space_description = self.flat_view
         else:
             self.search_space_description = self.hierarchical_view
+            if "Constrained" in h["Structure"].keys():
+                self.has_constraints = True
 
         self._size = self.__get_size()
 
-        self.current_level: List[Hyperparameter] = []
-        self.current_level.append(self.search_space_description)
+        self.current_level_regions: Set[Tuple[Hyperparameter]] = {(self.search_space_description,)}
+        self.current_level_number = -1
         self.next_level()
 
         self.regions = []
-        while len(self.current_level) > 0:
+        self.leftover_regions:dict[int, Set[Tuple[Hyperparameter]]] = {}
+        while len(self.current_level_regions) > 0:
             regions = self.get_regions_on_current_level()
             for r in regions:
                 self.regions.append(r)
@@ -509,36 +579,69 @@ class SearchSpace:
         self.hp_names = sum([[hp.name for hp in r]for r in self.regions], [])
 
     def reset_level(self):
-        self.current_level = [self.search_space_description]
+        self.current_level_regions = {(self.search_space_description,)}
+        self.current_level_number = -1
+        self.leftover_regions = {}
         self.next_level()
 
     def next_level(self):
-        children: List[Hyperparameter] = []
-        for h in self.current_level:
-            children.extend(h.get_children())
-        self.current_level = children
-        return self.current_level
+        children: Set[Tuple[Hyperparameter]] = set()
+        if not self.has_constraints:
+            for r in self.current_level_regions:
+                for h in r:
+                    next_region = tuple(h.get_children())
+                    if len(next_region) > 0:
+                        children.add(next_region)
+        else:
+            for r in self.current_level_regions:
+                for h in r:
+                    added_levels = set()
+                    for child in h.get_children():
+                        if child.level in added_levels:
+                            continue
+                        added_levels.add(child.level)
+                        next_region = tuple(filter(lambda x: child.level == x.level, h.get_children()))
+                        if child.level == self.current_level_number + 1:
+                            children.add(next_region)
+                        else:
+                            if child.level not in self.leftover_regions:
+                                self.leftover_regions[child.level] = {next_region}
+                            else:
+                                self.leftover_regions[child.level].add(next_region)
+        self.current_level_regions = children
+        self.current_level_number += 1
+        return self.current_level_regions
 
     def get_regions_on_current_level(self) -> Set[Tuple[Hyperparameter]]:
-        regions: Set[Tuple[Hyperparameter]] = set()
-
-        for h in self.current_level:
-            region = tuple(filter(lambda x: h.new_are_siblings(x), self.current_level))  # list of relevant parameters
-            regions.add(region)
-
-        return regions
+        return self.current_level_regions
 
     def activate_regions(self, parent: pd.DataFrame) -> Set[Tuple[Hyperparameter]]:
-        # get all columns that are hp_names
-        parent = parent.drop(columns=parent.columns.difference(self.hp_names))
-        available_regions = self.get_regions_on_current_level()
-        activated_regions = set()
-        for r in available_regions:
-            for hp in r:
-                for p in parent.to_numpy().flatten():
-                    if type(p) is str: # only categorical parameters (and hp names) have string values
-                        if hp.activation_category in p:
-                            activated_regions.add(r)
+        if not self.has_constraints:
+            # get all columns that are hp_names(and not objectives)
+            parent = parent.drop(columns=parent.columns.difference(self.hp_names))
+            available_regions = self.get_regions_on_current_level()
+            activated_regions = set()
+            for r in available_regions:
+                for hp in r:
+                    for p in parent.to_numpy().flatten():
+                        if type(p) is str: # only categorical parameters (and hp names) have string values
+                            if hp.activation_category in p:
+                                activated_regions.add(r)
+        else:
+            # turn parent to dict of hp_name to value (DataFrame has only one row)
+            parent = parent.iloc[0].to_dict()
+            available_regions = self.get_regions_on_current_level()
+            activated_regions = set()
+            if self.current_level_number in self.leftover_regions.keys():
+                available_regions.update(self.leftover_regions[self.current_level_number])
+            for r in available_regions:
+                region = []
+                for hp in r:
+                    if hp.check_enabled(parent):
+                        region.append(hp)
+                if region:
+                    activated_regions.add(tuple(region))
+
         return activated_regions
 
     def serialize(self) -> Dict:
@@ -654,9 +757,9 @@ class SearchSpace:
                 relative_name = c.split(".")[-1]
                 for hp in hyperparameter_description[relative_name].keys():
                     if hp == "Disable":
-                        h.add_category_restriction(c, hyperparameter_description[relative_name][hp], restriction_type="Disable")
+                        h.add_category_constraint(c, hyperparameter_description[relative_name][hp], constraint_type="Disable")
                     elif hp == "Forced":
-                        h.add_category_restriction(c, hyperparameter_description[relative_name][hp], restriction_type="Forced")
+                        h.add_category_constraint(c, hyperparameter_description[relative_name][hp], constraint_type="Forced")
                     elif hp != "Type":
                         child = self._inner_init(hyperparameter_description[relative_name][hp], hp, h, c)
                         h.add_child_hyperparameter(child, c)
@@ -732,23 +835,3 @@ def get_search_space_record(search_space: SearchSpace, experiment_id: str) -> Di
         "SearchspaceObject": pickle.dumps(search_space)
     }
     return record
-
-def boolean_expression_to_datastructure(boolean_expression: str) -> list[tuple[list[str], list[str]]]:
-    boolean_expression = boolean_expression.replace(" and ", " && ").replace(" or ", " || ").replace(" not ", " !")
-    disjuncts = []
-    for disjunct in boolean_expression.split(" || "):
-        disjunct = disjunct.strip()
-        if disjunct.startswith("(") and disjunct.endswith(")"):
-            disjunct = disjunct[1:-1].strip()
-        if disjunct:
-            conjunct = ([],[])
-            for literal in disjunct.split(" && "):
-                literal = literal.strip()
-                if literal.startswith("(") and literal.endswith(")"):
-                    literal = literal[1:-1].strip()
-                if literal.startswith("!"):
-                    conjunct[1].append(literal[1:])
-                else:
-                    conjunct[0].append(literal)
-            disjuncts.append(conjunct)
-    return disjuncts
