@@ -1,0 +1,250 @@
+{
+    "Context": {
+        "TaskConfiguration": {
+            "TaskName": "test",
+            "MaxTimeToRunTask": 10,
+            "TimeUnit": "seconds",
+            "Scenario": {},
+            "Objectives": {
+                "Y1": {
+                    "Name": "Y1",
+                    "DataType": "float",
+                    "Minimization": false,
+                    "MinExpectedValue": 0,
+                    "MaxExpectedValue": 100
+                }
+            }
+        },
+        "SearchSpace": {
+            "Structure": {
+                "Constrained": {}
+            },
+            "X": {
+                "disable_multiples": {
+                    "Type": "Category"
+                },
+                "disable_single": {
+                    "Type": "Category"
+                },
+                "force_single": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.X.disable_multiples",
+                    "Context.SearchSpace.X.disable_single",
+                    "Context.SearchSpace.X.force_single"
+                ],
+                "Default": "Context.SearchSpace.X.disable_single",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "Y": {
+                "use_X": {
+                    "Type": "Category"
+                },
+                "ignore_X": {
+                    "Type": "Category"
+                },
+                "disable_N": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.Y.use_X",
+                    "Context.SearchSpace.Y.ignore_X",
+                    "Context.SearchSpace.Y.disable_N"
+                ],
+                "Default": "Context.SearchSpace.Y.use_X",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "fcard_N": {
+                "0": {
+                    "Type": "Category"
+                },
+                "1": {
+                    "Type": "Category",
+                    "Disable": "Context.SearchSpace.X.disable_single and not Context.SearchSpace.Y.ignore_X or Context.SearchSpace.Y.disable_N",
+                    "Force": "Context.SearchSpace.Y.use_X and Context.SearchSpace.X.force_single"
+                },
+                "3": {
+                    "Type": "Category",
+                    "Disable": "(Context.SearchSpace.X.disable_multiples and Context.SearchSpace.Y.use_X) or Context.SearchSpace.Y.disable_N"
+                },
+                "Categories": [
+                    "Context.SearchSpace.fcard_N.0",
+                    "Context.SearchSpace.fcard_N.1",
+                    "Context.SearchSpace.fcard_N.3"
+                ],
+                "Default": "Context.SearchSpace.fcard_N.3",
+                "Type": "NominalHyperparameter",
+                "Level": 1
+            },
+            "N_0_subparameter": {
+                "Disable": "Context.SearchSpace.fcard_N.0",
+                "Lower": 0.0,
+                "Upper": 123.0,
+                "Default": 15.3,
+                "Type": "FloatHyperparameter",
+                "Level": 2
+            },
+            "N_1_subparameter": {
+                "Disable": "Context.SearchSpace.fcard_N.0 or Context.SearchSpace.fcard_N.1",
+                "Lower": 0.0,
+                "Upper": 123.0,
+                "Default": 15.3,
+                "Type": "FloatHyperparameter",
+                "Level": 2
+            },
+            "N_2_subparameter": {
+                "Disable": "Context.SearchSpace.fcard_N.0 or Context.SearchSpace.fcard_N.1",
+                "Lower": 0.0,
+                "Upper": 123.0,
+                "Default": 15.3,
+                "Type": "FloatHyperparameter",
+                "Level": 2
+            }
+        }
+    },
+    "ConfigurationSelection": {
+        "SamplingStrategy": {
+            "Sobol": {
+                "Seed": 1,
+                "Type": "sobol"
+            }
+        },
+        "Predictor": {
+            "WindowSize": 1.0,
+            "Model_0": {
+                "Surrogate": {
+                    "Instance": {
+                        "ModelMock": {
+                            "MultiObjective": true,
+                            "Type": "model_mock"
+                        }
+                    }
+                },
+                "Optimizer": {
+                    "Instance": {
+                        "RandomSearch": {
+                            "SamplingSize": 100,
+                            "MultiObjective": true,
+                            "Type": "random_search"
+                        }
+                    }
+                },
+                "Validator": {
+                    "ExternalValidator": {
+                        "MockValidator": {
+                            "Type": "mock_validator"
+                        }
+                    }
+                },
+                "CandidateSelector": {
+                    "BestMultiPointProposal": {
+                        "NumberOfPoints": 1,
+                        "Type": "best_multi_point"
+                    }
+                }
+            },
+            "Model_1": {
+                "Surrogate": {
+                    "Instance": {
+                        "ModelMock": {
+                            "MultiObjective": true,
+                            "Type": "model_mock"
+                        }
+                    }
+                },
+                "Optimizer": {
+                    "Instance": {
+                        "RandomSearch": {
+                            "SamplingSize": 100,
+                            "MultiObjective": true,
+                            "Type": "random_search"
+                        }
+                    }
+                },
+                "Validator": {
+                    "ExternalValidator": {
+                        "MockValidator": {
+                            "Type": "mock_validator"
+                        }
+                    }
+                },
+                "CandidateSelector": {
+                    "BestMultiPointProposal": {
+                        "NumberOfPoints": 1,
+                        "Type": "best_multi_point"
+                    }
+                }
+            },
+            "Model_2": {
+                "Surrogate": {
+                    "Instance": {
+                        "ModelMock": {
+                            "MultiObjective": true,
+                            "Type": "model_mock"
+                        }
+                    }
+                },
+                "Optimizer": {
+                    "Instance": {
+                        "RandomSearch": {
+                            "SamplingSize": 100,
+                            "MultiObjective": true,
+                            "Type": "random_search"
+                        }
+                    }
+                },
+                "Validator": {
+                    "ExternalValidator": {
+                        "MockValidator": {
+                            "Type": "mock_validator"
+                        }
+                    }
+                },
+                "CandidateSelector": {
+                    "BestMultiPointProposal": {
+                        "NumberOfPoints": 1,
+                        "Type": "best_multi_point"
+                    }
+                }
+            }
+        }
+    },
+    "RepetitionManager": {
+        "MaxFailedTasksPerConfiguration": 1,
+        "Instance": {
+            "QuantityBased": {
+                "MaxTasksPerConfiguration": 10,
+                "Type": "quantity_based"
+            }
+        }
+    },
+    "StopCondition": {
+        "Instance": {
+            "GuaranteedSC": {
+                "Type": "guaranteed",
+                "Name": "G"
+            },
+            "QuantityBasedSC": {
+                "Parameters": {
+                    "MaxConfigs": 15
+                },
+                "Type": "quantity_based",
+                "Name": "Q"
+            },
+            "ValidationBasedSC": {
+                "Type": "validation_based",
+                "Name": "V"
+            }
+        },
+        "StopConditionTriggerLogic": {
+            "Expression": "G and Q and V",
+            "InspectionParameters": {
+                "RepetitionPeriod": 1,
+                "TimeUnit": "seconds"
+            }
+        }
+    }
+}

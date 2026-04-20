@@ -9,8 +9,8 @@ abstract Hyperparameter {
 
 abstract Category {
   Type -> predefined
-  Disabled -> string ? //boolean expression of Categories(of lower levels) in DNF; if true: Category is unavailable
-  Forced -> string ? //boolean expression of Categories(of lower levels) in DNF; if true: Value of HP must be this Category
+  Disable -> string ? //boolean expression of Categories(of lower levels) in DNF; if true: Category is unavailable
+  Force -> string ? //boolean expression of Categories(of lower levels) in DNF; if true: Value of HP must be this Category
   [Type = "Category"]
 }
 

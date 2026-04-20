@@ -110,7 +110,7 @@ class Hyperparameter(ABC):
         """
         if self.disable is not None and self.disable.is_satisfied(configuration):
             return False
-        if self.parent is not None and self.activation_category is not None:
+        if self.parent is not None and self.activation_category not in [None, "root"]:
             return configuration.get(self.parent.name) == self.activation_category
         return True
 
@@ -180,7 +180,7 @@ class CategoricalHyperparameter(Hyperparameter, ABC):
         self._default_value = default_value or list(self._categories)[len(self._categories) // 2]
 
         self._category_disable: MutableMapping[_CATEGORY, Constraint|None] = OrderedDict({})
-        self._category_forced: MutableMapping[_CATEGORY, Constraint|None] = OrderedDict({})
+        self._category_force: MutableMapping[_CATEGORY, Constraint|None] = OrderedDict({})
         self.enabled_categories: Set[_CATEGORY] = set(categories)
 
     @property
@@ -206,17 +206,17 @@ class CategoricalHyperparameter(Hyperparameter, ABC):
         else:
             self._categories[category].append(other)
 
-    def add_category_constraint(self, category: _CATEGORY, boolean_expression: str, constraint_type: Literal["Disable"]|Literal["Forced"] = "Disable"):
+    def add_category_constraint(self, category: _CATEGORY, boolean_expression: str, constraint_type: Literal["Disable"]|Literal["Force"] = "Disable"):
         if category not in self._categories:
             raise ValueError(f"{self.name}: category {category} does not exist.")
         else:
             constraint: Constraint = Constraint(boolean_expression)
             if constraint_type == "Disable":
                 self._category_disable[category] = constraint
-            elif constraint_type == "Forced":
-                self._category_forced[category] = constraint
+            elif constraint_type == "Force":
+                self._category_force[category] = constraint
             else:
-                raise ValueError(f"{self.name}: constraint type {constraint_type} is not supported. Use 'Disable' or 'Forced'.")
+                raise ValueError(f"{self.name}: constraint type {constraint_type} is not supported. Use 'Disable' or 'Force'.")
 
     def check_enabled(self, configuration: dict[str, _CATEGORY]) -> bool:
         """
@@ -228,8 +228,8 @@ class CategoricalHyperparameter(Hyperparameter, ABC):
         """
         if not super().check_enabled(configuration):
             return False
-        if self._category_forced:
-            for category, constraint in self._category_forced.items():
+        if self._category_force:
+            for category, constraint in self._category_force.items():
                 if constraint.is_satisfied(configuration):
                     self.enabled_categories = {category}
                     return True
@@ -532,10 +532,10 @@ class Constraint:
                     if literal.startswith("(") and literal.endswith(")"):
                         literal = literal[1:-1].strip()
                     if literal.startswith("!"):
-                        conjunct[1].append(literal[1:].split(".")[-2], literal[1:])
+                        conjunct[1].append((literal[1:].split(".")[-2], literal[1:]))
                     else:
-                        conjunct[0].append(literal.split(".")[-2], literal)
-                self.constraint.append(conjunct)
+                        conjunct[0].append((literal.split(".")[-2], literal))
+                self.constraint.append((conjunct))
     
     def is_satisfied(self, parameters: dict[str, _CATEGORY]) -> bool:
         for disjunct in self.constraint:
@@ -543,6 +543,26 @@ class Constraint:
                       not any(parameters.get(literal[0]) == literal[1] for literal in disjunct[1]):
                 return True
         return False
+    
+class Region(Tuple[Hyperparameter]):
+    """Changes __hash__() of region, because Predictor.mapping_region_model and 
+        Predictor.mapping_region_sampling_strategy are dicts with region as key, 
+        and if the parameters in region change(because of constraints) 
+        we need to still recognize the region as the same(needs same hash)!
+        :param hps: Hyperparameters in the region
+        :param hash_value: hash value to use for the region, should be the same if
+            level and activation_category of the contained parameters are the same
+    """
+    def __new__(cls, hps: Tuple[Hyperparameter], id: int|None = None):
+        return super(Region, cls).__new__(cls, hps)
+    
+    def __init__(self, hps: Tuple[Hyperparameter], id: int|None = None):
+        self.id = id
+
+    def __hash__(self):
+        if self.id is not None:
+            return self.id
+        return super().__hash__()
 
 class SearchSpace:
     def __init__(self, h: dict):
@@ -561,59 +581,58 @@ class SearchSpace:
                 self.has_constraints = True
 
         self._size = self.__get_size()
-
-        self.current_level_regions: Set[Tuple[Hyperparameter]] = {(self.search_space_description,)}
-        self.current_level_number = -1
+        if not self.has_constraints:
+            self.current_regions: Set[Tuple[Hyperparameter]] = {(self.search_space_description,)}
+        else:
+            self.current_regions: Set[Tuple[Hyperparameter]] = {Region(hps=(self.search_space_description,), id = -1)}
+        self.current_level = -1
+        self.leftover_regions:dict[int, Set[Region]] = {}
         self.next_level()
 
-        self.regions = []
-        self.leftover_regions:dict[int, Set[Tuple[Hyperparameter]]] = {}
-        while len(self.current_level_regions) > 0:
+        self.regions: list[Tuple[Hyperparameter]] = []
+        while len(self.current_regions) > 0:
             regions = self.get_regions_on_current_level()
-            for r in regions:
-                self.regions.append(r)
+            self.regions.extend(regions)
             self.next_level()
 
         self.reset_level()
 
-        self.hp_names = sum([[hp.name for hp in r]for r in self.regions], [])
+        self.hp_names: list[str] = sum([[hp.name for hp in r]for r in self.regions], [])
 
     def reset_level(self):
-        self.current_level_regions = {(self.search_space_description,)}
-        self.current_level_number = -1
+        if not self.has_constraints:
+            self.current_regions: Set[Tuple[Hyperparameter]] = {(self.search_space_description,)}
+        else:
+            self.current_regions: Set[Tuple[Hyperparameter]] = {Region(hps=(self.search_space_description,), id = -1)}
+        self.current_level = -1
         self.leftover_regions = {}
         self.next_level()
 
     def next_level(self):
-        children: Set[Tuple[Hyperparameter]] = set()
+        children: Set[Tuple[Hyperparameter]] = self.leftover_regions.get(self.current_level + 1) or set()
         if not self.has_constraints:
-            for r in self.current_level_regions:
+            for r in self.current_regions:
                 for h in r:
-                    next_region = tuple(h.get_children())
-                    if len(next_region) > 0:
-                        children.add(next_region)
-        else:
-            for r in self.current_level_regions:
-                for h in r:
-                    added_levels = set()
                     for child in h.get_children():
-                        if child.level in added_levels:
-                            continue
-                        added_levels.add(child.level)
-                        next_region = tuple(filter(lambda x: child.level == x.level, h.get_children()))
-                        if child.level == self.current_level_number + 1:
+                        children.add(tuple(filter(lambda x: child.new_are_siblings(x), h.get_children())))
+        else:
+            for r in self.current_regions:
+                for h in r:
+                    for child in h.get_children():
+                        next_region = Region(filter(lambda x: child.new_are_siblings(x), h.get_children()))
+                        if child.level == self.current_level + 1:
                             children.add(next_region)
                         else:
                             if child.level not in self.leftover_regions:
                                 self.leftover_regions[child.level] = {next_region}
                             else:
                                 self.leftover_regions[child.level].add(next_region)
-        self.current_level_regions = children
-        self.current_level_number += 1
-        return self.current_level_regions
+        self.current_regions = children
+        self.current_level += 1
+        return self.current_regions
 
     def get_regions_on_current_level(self) -> Set[Tuple[Hyperparameter]]:
-        return self.current_level_regions
+        return self.current_regions
 
     def activate_regions(self, parent: pd.DataFrame) -> Set[Tuple[Hyperparameter]]:
         if not self.has_constraints:
@@ -632,15 +651,13 @@ class SearchSpace:
             parent = parent.iloc[0].to_dict()
             available_regions = self.get_regions_on_current_level()
             activated_regions = set()
-            if self.current_level_number in self.leftover_regions.keys():
-                available_regions.update(self.leftover_regions[self.current_level_number])
             for r in available_regions:
                 region = []
                 for hp in r:
                     if hp.check_enabled(parent):
                         region.append(hp)
                 if region:
-                    activated_regions.add(tuple(region))
+                    activated_regions.add(Region(hps=region, id = hash(r)))
 
         return activated_regions
 
@@ -758,8 +775,8 @@ class SearchSpace:
                 for hp in hyperparameter_description[relative_name].keys():
                     if hp == "Disable":
                         h.add_category_constraint(c, hyperparameter_description[relative_name][hp], constraint_type="Disable")
-                    elif hp == "Forced":
-                        h.add_category_constraint(c, hyperparameter_description[relative_name][hp], constraint_type="Forced")
+                    elif hp == "Force":
+                        h.add_category_constraint(c, hyperparameter_description[relative_name][hp], constraint_type="Force")
                     elif hp != "Type":
                         child = self._inner_init(hyperparameter_description[relative_name][hp], hp, h, c)
                         h.add_child_hyperparameter(child, c)

@@ -94,7 +94,9 @@ class MainThread(threading.Thread):
                 exp_desc_file_path = argv[1]
             else:
                 # TODO: revert when done
-                exp_desc_file_path = './Resources/selftesting_instance.json'
+                #exp_desc_file_path = './Resources/EnergyExperiment/EnergyExperiment.json'
+                #exp_desc_file_path = './Resources/selftesting_instance.json'
+                exp_desc_file_path = './Resources/test_instance_constrained.json'
                 log_msg = f"The Experiment Setup was not provided and the path to an experiment file was not specified." \
                           f" The default one will be executed: {exp_desc_file_path}"
                 self.logger.warning(log_msg)

@@ -138,10 +138,10 @@ class Predictor:
                         predicted = partial_configuration
                     else:
                         predicted = predicted.join(partial_configuration)
-                if len(next_activated_regions) == 0:
-                    next_activated_regions = self.search_space.activate_regions(predicted)
-                else:
-                    next_activated_regions.update(self.search_space.activate_regions(predicted))
+                #if len(next_activated_regions) == 0:
+                #    next_activated_regions = self.search_space.activate_regions(predicted)
+                #else:
+                #    next_activated_regions.update(self.search_space.activate_regions(predicted))
 
                 region_index = str(self.search_space.regions.index(region))
                 prediction_info[region_index] = {
@@ -151,6 +151,7 @@ class Predictor:
                 if self.mapping_region_model[region].time_to_build is not None:
                     model_dump.append(pickle.dumps(self.mapping_region_model[region]))
 
+            next_activated_regions = self.search_space.activate_regions(predicted)
             activated_regions = next_activated_regions
 
         predicted_configurations = []
