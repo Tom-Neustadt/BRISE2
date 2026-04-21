@@ -319,7 +319,7 @@ class CategoricalHyperparameter(Hyperparameter, ABC):
             return boundaries
 
     def transform(self, value):
-        categories = list(self._categories.keys())
+        categories = list(self.categories)
         category_index = round(value * (len(categories) - 1))
         return categories[category_index]
 
@@ -563,6 +563,9 @@ class Region(Tuple[Hyperparameter]):
         if self.id is not None:
             return self.id
         return super().__hash__()
+    
+    def __eq__(self, other):
+        return hash(self) == hash(other)
 
 class SearchSpace:
     def __init__(self, h: dict):

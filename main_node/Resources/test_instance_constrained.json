@@ -42,15 +42,11 @@
                 "use_X": {
                     "Type": "Category"
                 },
-                "ignore_X": {
-                    "Type": "Category"
-                },
                 "disable_N": {
                     "Type": "Category"
                 },
                 "Categories": [
                     "Context.SearchSpace.Y.use_X",
-                    "Context.SearchSpace.Y.ignore_X",
                     "Context.SearchSpace.Y.disable_N"
                 ],
                 "Default": "Context.SearchSpace.Y.use_X",
@@ -63,7 +59,7 @@
                 },
                 "1": {
                     "Type": "Category",
-                    "Disable": "Context.SearchSpace.X.disable_single and not Context.SearchSpace.Y.ignore_X or Context.SearchSpace.Y.disable_N",
+                    "Disable": "Context.SearchSpace.X.disable_single and Context.SearchSpace.Y.use_X or Context.SearchSpace.Y.disable_N",
                     "Force": "Context.SearchSpace.Y.use_X and Context.SearchSpace.X.force_single"
                 },
                 "3": {
