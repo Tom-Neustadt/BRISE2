@@ -109,7 +109,7 @@ class Model:
         names_of_parameters = [p.name for p in parameters]
 
         data = pd.DataFrame(
-            [cfg.to_series()[names_of_parameters + list(self.objectives.keys())] for cfg in configurations])
+            [cfg.to_series().reindex(names_of_parameters + list(self.objectives.keys())) for cfg in configurations])
 
         if data.empty:
             return pd.DataFrame()
