@@ -553,19 +553,27 @@ class Region(Tuple[Hyperparameter]):
         :param hash_value: hash value to use for the region, should be the same if
             level and activation_category of the contained parameters are the same
     """
-    def __new__(cls, hps: Tuple[Hyperparameter], id: int|None = None):
+    def __new__(cls, hps: Tuple[Hyperparameter], exclude_indices: list[int] = []):
         return super(Region, cls).__new__(cls, hps)
     
-    def __init__(self, hps: Tuple[Hyperparameter], id: int|None = None):
-        self.id = id
+    def __init__(self, hps: Tuple[Hyperparameter], exclude_indices: list[int] = []):
+        self.reduced_region = None
+        if self.exclude_indices:
+            self.reduced_region = self.exclude_indices(exclude_indices)
 
-    def __hash__(self):
-        if self.id is not None:
-            return self.id
-        return super().__hash__()
+    def exclude_indices(self, indices: list[int]):
+        self.reduced_region = tuple(hp for i, hp in enumerate(self) if i not in indices)
+
+    def __iter__(self):
+        return iter(self.reduced_region) if self.reduced_region is not None else super().__iter__()
     
-    def __eq__(self, other):
-        return hash(self) == hash(other)
+    #def __hash__(self):
+    #    if self.id is not None:
+    #        return self.id
+    #    return super().__hash__()
+    #
+    #def __eq__(self, other):
+    #    return hash(self) == hash(other)
 
 class SearchSpace:
     def __init__(self, h: dict):
@@ -587,7 +595,7 @@ class SearchSpace:
         if not self.has_constraints:
             self.current_regions: Set[Tuple[Hyperparameter]] = {(self.search_space_description,)}
         else:
-            self.current_regions: Set[Tuple[Hyperparameter]] = {Region(hps=(self.search_space_description,), id = -1)}
+            self.current_regions: Set[Tuple[Hyperparameter]] = {Region(hps=(self.search_space_description,))}
         self.current_level = -1
         self.leftover_regions:dict[int, Set[Region]] = {}
         self.next_level()
@@ -606,7 +614,7 @@ class SearchSpace:
         if not self.has_constraints:
             self.current_regions: Set[Tuple[Hyperparameter]] = {(self.search_space_description,)}
         else:
-            self.current_regions: Set[Tuple[Hyperparameter]] = {Region(hps=(self.search_space_description,), id = -1)}
+            self.current_regions: Set[Tuple[Hyperparameter]] = {Region(hps=(self.search_space_description,))}
         self.current_level = -1
         self.leftover_regions = {}
         self.next_level()
@@ -652,15 +660,18 @@ class SearchSpace:
         else:
             # turn parent to dict of hp_name to value (DataFrame has only one row)
             parent = parent.iloc[0].to_dict()
-            available_regions = self.get_regions_on_current_level()
+            available_regions: Set[Region] = self.get_regions_on_current_level()
             activated_regions = set()
             for r in available_regions:
-                region = []
-                for hp in r:
-                    if hp.check_enabled(parent):
-                        region.append(hp)
-                if region:
-                    activated_regions.add(Region(hps=region, id = hash(r)))
+                exclude_indices = []
+                for i, hp in enumerate(r):
+                    if not hp.check_enabled(parent):
+                        exclude_indices.append(i)
+                if len(exclude_indices) == len(r):
+                    continue
+                if exclude_indices:
+                    r.exclude_indices(exclude_indices)
+                activated_regions.add(r)
 
         return activated_regions
 
