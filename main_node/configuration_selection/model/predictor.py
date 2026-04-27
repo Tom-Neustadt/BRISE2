@@ -6,8 +6,9 @@ from typing import List, Mapping, Set, Tuple
 import pandas as pd
 
 from configuration_selection.sampling.sampling_strategy_orchestrator import SamplingStrategyOrchestrator
+from configuration_selection.sampling.selection_algorithm_abs import SamplingStrategy
 from core_entities.configuration import Configuration
-from core_entities.search_space import Hyperparameter
+from core_entities.search_space import Hyperparameter, Region
 from core_entities.search_space import SearchSpace
 from tools.mongo_dao import MongoDB
 from configuration_selection.model.model import Model
@@ -42,14 +43,14 @@ class Predictor:
             if "Model" in i[0]:
                 models_types.append(i)
 
-        self.mapping_region_model = {}
+        self.mapping_region_model: dict[Tuple[Hyperparameter], Model] = {}
         for r in self.search_space.regions:
             level = r[0].level
             type = models_types[level]
             model = Model(model_description=type, region=r, objectives=self.task_config["Objectives"])
             self.mapping_region_model[r] = model
 
-        self.mapping_region_sampling_strategy = {}
+        self.mapping_region_sampling_strategy: dict[Tuple[Hyperparameter], SamplingStrategy] = {}
         for r in self.search_space.regions:
             sampling_strategy = (self.sampling_strategy_orchestrator.
                                  get_sampling_strategy
@@ -155,7 +156,7 @@ class Predictor:
             activated_regions = next_activated_regions
 
         predicted_configurations = []
-        for i, f in predicted.iterrows():
+        for _, f in predicted.iterrows():
             if not sample:
                 parameters = f.drop(predicted.columns.difference(considered_hp_names)).to_dict()
                 predicted_values = f.drop(considered_hp_names).to_dict()

@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from typing import Mapping
 from typing import Tuple
 
-from core_entities.search_space import Hyperparameter
+from core_entities.search_space import Hyperparameter, Region
 
 
 class SamplingStrategy(ABC):
@@ -40,7 +40,10 @@ class SamplingStrategy(ABC):
         transformed_values = []  # transform based on the Hyperparameter type
         it = np.nditer(df, flags=['f_index'])  # safe iterator for ndarrays
         for sampled_value in it:
-            transformed_values.append(self.region[it.index].transform(sampled_value))
+            if  not isinstance(self.region, Region) or it.index not in self.region.excluded_indices:
+                transformed_values.append(self.region[it.index].transform(sampled_value))
+            else:
+                transformed_values.append(None) # parameter is disabled
 
         transformed_values_np = np.array(transformed_values, dtype=object)
         transformed_values_np = transformed_values_np.reshape(df.shape)

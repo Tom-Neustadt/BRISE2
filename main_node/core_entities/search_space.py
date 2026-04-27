@@ -557,16 +557,20 @@ class Region(Tuple[Hyperparameter]):
         return super(Region, cls).__new__(cls, hps)
     
     def __init__(self, hps: Tuple[Hyperparameter], exclude_indices: list[int] = []):
-        self.reduced_region = None
-        if self.exclude_indices:
-            self.reduced_region = self.exclude_indices(exclude_indices)
+        #self.full = self
+        self.excluded_indices = exclude_indices
+        #self.reduced = None
+        #if self.exclude_indices:
+        #    self.reduced = self.exclude_indices(exclude_indices)
 
     def exclude_indices(self, indices: list[int]):
-        self.reduced_region = tuple(hp for i, hp in enumerate(self) if i not in indices)
+        self.excluded_indices = indices
+        #self.reduced = None
+        #self.reduced = tuple(hp for i, hp in enumerate(self) if i not in indices)
 
-    def __iter__(self):
-        return iter(self.reduced_region) if self.reduced_region is not None else super().__iter__()
-    
+    #def __iter__(self):
+    #    return iter(self.reduced) if self.reduced is not None else super().__iter__()
+    #
     #def __hash__(self):
     #    if self.id is not None:
     #        return self.id
