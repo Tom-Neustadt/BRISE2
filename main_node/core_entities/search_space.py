@@ -628,20 +628,24 @@ class SearchSpace:
         if not self.has_constraints:
             for r in self.current_regions:
                 for h in r:
-                    for child in h.get_children():
-                        children.add(tuple(filter(lambda x: child.new_are_siblings(x), h.get_children())))
+                    if isinstance(h, CategoricalHyperparameter):
+                        for h_children in h._categories.values():
+                            if h_children:
+                                children.add(tuple(h_children))
         else:
             for r in self.current_regions:
                 for h in r:
-                    for child in h.get_children():
-                        next_region = Region(filter(lambda x: child.new_are_siblings(x), h.get_children()))
-                        if child.level == self.current_level + 1:
-                            children.add(next_region)
-                        else:
-                            if child.level not in self.leftover_regions:
-                                self.leftover_regions[child.level] = {next_region}
-                            else:
-                                self.leftover_regions[child.level].add(next_region)
+                    if isinstance(h, CategoricalHyperparameter):
+                        for h_children in h._categories.values():
+                            for child in h_children:
+                                next_region = Region(filter(lambda x: child.level == x.level, h_children))
+                                if child.level == self.current_level + 1:
+                                    children.add(next_region)
+                                else:
+                                    if child.level not in self.leftover_regions:
+                                        self.leftover_regions[child.level] = {next_region}
+                                    else:
+                                        self.leftover_regions[child.level].add(next_region)
         self.current_regions = children
         self.current_level += 1
         return self.current_regions
@@ -663,6 +667,11 @@ class SearchSpace:
                                 activated_regions.add(r)
         else:
             # turn parent to dict of hp_name to value (DataFrame has only one row)
+            # TODO: rework for multiple predictions
+            #   -> rework format "parents" is modified to and the relevant methods recursively called with it
+            #   -> rework how disabled hps and categories and forced categories are handled for multiple predictions at once
+            if parent.shape[0] != 1:
+                raise ValueError("For now only one configuration can be evaluated at a time for a constrained search space.")
             parent = parent.iloc[0].to_dict()
             available_regions: Set[Region] = self.get_regions_on_current_level()
             activated_regions = set()
