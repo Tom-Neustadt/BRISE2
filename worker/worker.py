@@ -5,6 +5,91 @@ def test(task: dict):
     import random
     return {'Y1': random.random(), 'Y2': random.random(), 'Y3': random.random(), 'Y4': random.random(), 'Y5': random.random()}
 
+def selftesting(task: dict):
+    logging.getLogger(__name__).info("starting selftesting worker")
+    import json
+    try:
+        with open(task['Scenario']['ws_file'], 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            combinations = data['combinations']
+            forbid: list[list[list[str]]] = data['forbid']
+        parameters: dict[str, str] = task["parameters"]
+        for forbidden_combination in forbid:
+            if all(forbidden_component[0] in parameters and parameters[forbidden_component[0]].endswith('.'+forbidden_component[1]) 
+                    for forbidden_component in forbidden_combination):
+                logging.getLogger(__name__).error("Ending selftesting worker with forbidden combination")
+                return {"new_pairs": -1}
+        new_pairs = 0
+        for param, cat_path in parameters.items():
+            _, cat = cat_path.rsplit(".", 1)
+            #try:
+            #sub_combinations = combinations[param][cat]
+            for other_param, other_cat_path in parameters.items():
+                if other_cat_path != cat_path:
+                    _, other_cat = other_cat_path.rsplit(".", 1)
+                    try:
+                        #if other_cat in sub_combinations[other_param]:
+                        if other_cat in combinations[param][cat][other_param]:
+                            new_pairs += 1
+                    except KeyError: 
+                        pass
+            #except KeyError: pass
+        logging.getLogger(__name__).info("Ending selftesting worker")
+        return {"new_pairs": new_pairs}
+    except Exception as error:
+        logging.getLogger(__name__).error(
+            "An error occurred during performing 'selftesting' Task with parameters %s: %s" % (
+                task['parameters'], error), exc_info=True)
+        return {"new_pairs": -1}
+    
+#fix please:
+
+def selftesting_flat_pairs(task: dict):
+    import json
+    class CombinationsDecoder(json.JSONDecoder):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._parent_parse_array = self.parse_array
+            self.parse_array = self._set_from_JSONArray
+
+        def _set_from_JSONArray(self, *args, **kwargs):
+            return set(self._parent_parse_array(*args, **kwargs))
+    logging.getLogger(__name__).info("starting selftesting worker")
+    try:
+        #with open(task['Scenario']['ws_file'], 'r', encoding='utf-8') as file:
+        #    data = json.load(file)
+        #    combinations = data['combinations']
+        #    forbid: list[list[list[str]]] = data['forbid']
+        with open(task['Scenario']['pairwise_file'], 'r', encoding='utf-8') as file:
+            combinations = json.load(file, cls=CombinationsDecoder)
+        with open(task['Scenario']['forbid_file'], 'r', encoding='utf-8') as file:
+            forbid = json.load(file)
+        parameters: dict[str, str] = task["parameters"]
+        for forbidden_combination in forbid:
+            if all(cat_path:= parameters.get(forbidden_component[0]) and cat_path.endswith('.'+forbidden_component[1]) 
+                    for forbidden_component in forbidden_combination):
+                logging.getLogger(__name__).error("Ending selftesting worker with forbidden combination")
+                return {"new_pairs": 0}
+        new_pairs = 0
+        for cat_path in parameters.values():
+            choice1 = ".".join(cat_path.rsplit(".", 2)[-2:])
+            try:
+                sub_combinations = combinations[choice1]
+                for other_cat_path in parameters.values():
+                    choice2 = ".".join(other_cat_path.rsplit(".", 2)[-2:])
+                    if choice1 != choice2:
+                        try:
+                            if choice2 in sub_combinations:
+                                new_pairs += 1
+                        except KeyError: pass
+            except KeyError: pass
+        logging.getLogger(__name__).info("Ending selftesting worker")
+        return {"new_pairs": new_pairs}
+    except Exception as error:
+        logging.getLogger(__name__).error(
+            "An error occurred during performing 'selftesting' Task with parameters %s: %s" % (
+                task['parameters'], error), exc_info=True)
+        return {"new_pairs": 0}
 
 def energy_consumption(task: dict):
     from random import choice
