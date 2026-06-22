@@ -1,0 +1,240 @@
+{
+    "Context": {
+        "TaskConfiguration": {
+            "TaskName": "test",
+            "MaxTimeToRunTask": 10,
+            "TimeUnit": "seconds",
+            "Scenario": {},
+            "Objectives": {
+                "Y1": {
+                    "Name": "Y1",
+                    "DataType": "float",
+                    "Minimization": true,
+                    "MinExpectedValue": 0,
+                    "MaxExpectedValue": 1
+                }
+            }
+        },
+        "SearchSpace": {
+            "F1": {
+                "Lower": 0.0,
+                "Upper": 890.1,
+                "Default": 15.3,
+                "Type": "FloatHyperparameter",
+                "Level": 0
+            },
+            "I1": {
+                "Lower": 0,
+                "Upper": 1000,
+                "Default": 100,
+                "Type": "IntegerHyperparameter",
+                "Level": 0
+            },
+            "O1": {
+                "O11": {
+                    "Type": "Category"
+                },
+                "O12": {
+                    "Type": "Category"
+                },
+                "O13": {
+                    "Type": "Category"
+                },
+                "O14": {
+                    "Type": "Category"
+                },
+                "O15": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.O1.O11",
+                    "Context.SearchSpace.O1.O12",
+                    "Context.SearchSpace.O1.O13",
+                    "Context.SearchSpace.O1.O14",
+                    "Context.SearchSpace.O1.O15"
+                ],
+                "Default": "Context.SearchSpace.O1.O11",
+                "Type": "OrdinalHyperparameter",
+                "Level": 0
+            },
+            "Structure": {
+                "Flat": {}
+            }
+        }
+    },
+    "ConfigurationSelection": {
+        "SamplingStrategy": {
+            "MersenneTwister": {
+                "Type": "mersenne_twister",
+                "Seed": 100
+            }
+        },
+        "Predictor": {
+            "Model": {
+                "Surrogate": {
+                    "Instance": {
+                        "BayesianRidgeRegression": {
+                            "MultiObjective": false,
+                            "Parameters": {
+                                "max_iter": 1,
+                                "tol": 0.01
+                            },
+                            "Type": "sklearn_model_wrapper",
+                            "Class": "sklearn.linear_model.BayesianRidge"
+                        }
+                    },
+                    "ConfigurationTransformers": {
+                        "IntegerTransformer": {
+                            "SklearnIntMinMaxScaler": {
+                                "Type": "sklearn_integer_transformer",
+                                "Class": "sklearn.MinMaxScaler"
+                            }
+                        },
+                        "OrdinalTransformer": {
+                            "SklearnOrdinalEncoder": {
+                                "Type": "sklearn_ordinal_transformer",
+                                "Class": "sklearn.OrdinalEncoder"
+                            }
+                        },
+                        "NominalTransformer": {
+                            "BinaryEncoder": {
+                                "Type": "binary_transformer",
+                                "Class": "brise.BinaryEncoder"
+                            },
+                            "SklearnBinaryEncoder": {
+                                "Type": "sklearn_binary_transformer",
+                                "Class": "sklearn.OrdinalEncoder"
+                            }
+                        },
+                        "FloatTransformer": {
+                            "SklearnFloatMinMaxScaler": {
+                                "Type": "sklearn_float_transformer",
+                                "Class": "sklearn.MinMaxScaler"
+                            }
+                        }
+                    }
+                },
+                "Optimizer": {
+                    "Instance": {
+                        "MOEA": {
+                            "Algorithms": {
+                                "SEA": {
+                                    "MultiObjective": false
+                                },
+                                "SGA": {
+                                    "MultiObjective": false
+                                }
+                            },
+                            "Type": "moea",
+                            "Generations": 101,
+                            "PopulationSize": 101
+                        }
+                    },
+                    "ConfigurationTransformers": {
+                        "IntegerTransformer": {
+                            "SklearnIntMinMaxScaler": {
+                                "Type": "sklearn_integer_transformer",
+                                "Class": "sklearn.MinMaxScaler"
+                            }
+                        },
+                        "OrdinalTransformer": {
+                            "SklearnOrdinalEncoder": {
+                                "Type": "sklearn_ordinal_transformer",
+                                "Class": "sklearn.OrdinalEncoder"
+                            }
+                        },
+                        "NominalTransformer": {
+                            "BinaryEncoder": {
+                                "Type": "binary_transformer",
+                                "Class": "brise.BinaryEncoder"
+                            },
+                            "SklearnBinaryEncoder": {
+                                "Type": "sklearn_binary_transformer",
+                                "Class": "sklearn.OrdinalEncoder"
+                            }
+                        },
+                        "FloatTransformer": {
+                            "SklearnFloatMinMaxScaler": {
+                                "Type": "sklearn_float_transformer",
+                                "Class": "sklearn.MinMaxScaler"
+                            }
+                        }
+                    },
+                    "ValueTransformers": {
+                        "AcquisitionFunction": {
+                            "TPE_EI": {
+                                "Type": "tpe_ei"
+                            }
+                        }
+                    }
+                },
+                "Validator": {
+                    "ExternalValidator": {
+                        "QualityValidator": {
+                            "Split": {
+                                "KFold": {
+                                    "NumberOfFolds": 102
+                                }
+                            },
+                            "Type": "quality_validator",
+                            "QualityThreshold": 0
+                        }
+                    },
+                    "InternalValidator": {
+                        "QualityValidator": {
+                            "Split": {
+                                "KFold": {
+                                    "NumberOfFolds": 2
+                                },
+                                "HoldOut": {
+                                    "TrainingSet": 0.9
+                                }
+                            },
+                            "Type": "quality_validator",
+                            "QualityThreshold": 1
+                        }
+                    }
+                },
+                "CandidateSelector": {
+                    "RandomMultiPointProposal": {
+                        "NumberOfPoints": 1,
+                        "Type": "random_multi_point"
+                    }
+                }
+            },
+            "WindowSize": 0.01
+        }
+    },
+    "RepetitionManager": {
+        "Instance": {
+            "QuantityBased": {
+                "Type": "quantity_based",
+                "MaxTasksPerConfiguration": 1
+            }
+        },
+        "MaxFailedTasksPerConfiguration": 101
+    },
+    "StopCondition": {
+        "Instance": {
+            "BadConfigurationBasedSC": {
+                "Parameters": {
+                    "MaxBadConfigurations": 5
+                },
+                "Type": "bad_configuration_based",
+                "Name": "b"
+            }
+        },
+        "StopConditionTriggerLogic": {
+            "Expression": "b",
+            "InspectionParameters": {
+                "RepetitionPeriod": 1,
+                "TimeUnit": "seconds"
+            }
+        }
+    },
+    "DefaultConfigurationHandler": {
+        "RandomDCH": {
+            "Type": "random_default_config_handler"
+        }
+    }
+}

@@ -1,0 +1,154 @@
+{
+    "Context": {
+        "TaskConfiguration": {
+            "TaskName": "test",
+            "MaxTimeToRunTask": 10,
+            "TimeUnit": "seconds",
+            "Scenario": {},
+            "Objectives": {
+                "Y1": {
+                    "Name": "Y1",
+                    "DataType": "float",
+                    "Minimization": false,
+                    "MinExpectedValue": -34.1,
+                    "MaxExpectedValue": 27.4
+                }
+            }
+        },
+        "SearchSpace": {
+            "F1": {
+                "Lower": 0.0,
+                "Upper": 890.1,
+                "Default": 15.3,
+                "Type": "FloatHyperparameter",
+                "Level": 0
+            },
+            "I1": {
+                "Lower": 0,
+                "Upper": 1000,
+                "Default": 100,
+                "Type": "IntegerHyperparameter",
+                "Level": 0
+            },
+            "O1": {
+                "O11": {
+                    "Type": "Category"
+                },
+                "O12": {
+                    "Type": "Category"
+                },
+                "O13": {
+                    "Type": "Category"
+                },
+                "O14": {
+                    "Type": "Category"
+                },
+                "O15": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.O1.O11",
+                    "Context.SearchSpace.O1.O12",
+                    "Context.SearchSpace.O1.O13",
+                    "Context.SearchSpace.O1.O14",
+                    "Context.SearchSpace.O1.O15"
+                ],
+                "Default": "Context.SearchSpace.O1.O11",
+                "Type": "OrdinalHyperparameter",
+                "Level": 0
+            },
+            "Structure": {
+                "Flat": {}
+            }
+        }
+    },
+    "ConfigurationSelection": {
+        "SamplingStrategy": {
+            "Sobol": {
+                "Type": "sobol",
+                "Seed": 0
+            }
+        },
+        "Predictor": {
+            "Model": {
+                "Surrogate": {
+                    "Instance": {
+                        "BayesianRidgeRegression": {
+                            "MultiObjective": false,
+                            "Parameters": {
+                                "max_iter": 1,
+                                "tol": 0.01
+                            },
+                            "Type": "sklearn_model_wrapper",
+                            "Class": "sklearn.linear_model.BayesianRidge"
+                        }
+                    }
+                },
+                "Optimizer": {
+                    "Instance": {
+                        "RandomSearch": {
+                            "MultiObjective": true,
+                            "Type": "random_search",
+                            "SamplingSize": 1
+                        }
+                    }
+                },
+                "Validator": {
+                    "ExternalValidator": {
+                        "QualityValidator": {
+                            "Split": {
+                                "HoldOut": {
+                                    "TrainingSet": 0.5
+                                }
+                            },
+                            "Type": "quality_validator",
+                            "QualityThreshold": 0
+                        }
+                    }
+                },
+                "CandidateSelector": {
+                    "BestMultiPointProposal": {
+                        "NumberOfPoints": 1,
+                        "Type": "best_multi_point"
+                    }
+                }
+            },
+            "WindowSize": 0.01
+        }
+    },
+    "RepetitionManager": {
+        "Instance": {
+            "QuantityBased": {
+                "Type": "quantity_based",
+                "MaxTasksPerConfiguration": 1
+            }
+        },
+        "MaxFailedTasksPerConfiguration": 1
+    },
+    "StopCondition": {
+        "Instance": {
+            "GuaranteedSC": {
+                "Type": "guaranteed",
+                "Name": "G"
+            },
+            "QuantityBasedSC": {
+                "Parameters": {
+                    "MaxConfigs": 15
+                },
+                "Type": "quantity_based",
+                "Name": "Q"
+            },
+            "ValidationBasedSC": {
+                "Type": "validation_based",
+                "Name": "V"
+            }
+        },
+        "StopConditionTriggerLogic": {
+            "Expression": "G and Q and V",
+            "InspectionParameters": {
+                "RepetitionPeriod": 1,
+                "TimeUnit": "seconds"
+            }
+        }
+    }
+}

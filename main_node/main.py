@@ -242,7 +242,7 @@ class MainThread(threading.Thread):
                                                    body='')
 
     def experiment_api(self, ch=None, method=None, properties=None, body=None):
-        dictionary_dump = json.loads(body.decode())
+        dictionary_dump = body.decode()
         getattr(self.experiment, dictionary_dump)()
 
     def logging_api(self, ch=None, method=None, properties=None, body=None):
@@ -301,19 +301,19 @@ def run(experiment_setup=None):
 
 if __name__ == "__main__":
     # TODO: remove when done
-    main_node_directory = os.path.dirname(os.path.realpath(__file__))
-    brise_directory = os.path.dirname(main_node_directory)
-    local_deployment_path = os.path.join(brise_directory, "deployment_settings", "LocalDeployment.json")
-    with open(local_deployment_path, "r", encoding="utf-8") as local_deployment_file:
-        local_deployment = json.load(local_deployment_file)
-    #os.environ["BRISE_EVENT_SERVICE_HOST"] = local_deployment["EventService"]["Address"]
-    os.environ["BRISE_EVENT_SERVICE_HOST"] = "localhost"
-    os.environ["BRISE_EVENT_SERVICE_AMQP_PORT"] = str(local_deployment["EventService"]["AMQTPort"])
-    os.environ["BRISE_EVENT_SERVICE_GUI_PORT"] = str(local_deployment["EventService"]["GUIPort"])
-    #os.environ["BRISE_DATABASE_HOST"] = local_deployment["Database"]["Address"]
-    os.environ["BRISE_DATABASE_HOST"] = "localhost"
-    os.environ["BRISE_DATABASE_PORT"] = str(local_deployment["Database"]["Port"])
-    os.environ["BRISE_DATABASE_NAME"] = local_deployment["Database"]["DatabaseName"]
-    os.environ["BRISE_DATABASE_USER"] = local_deployment["Database"]["DatabaseUser"]
-    os.environ["BRISE_DATABASE_PASS"] = local_deployment["Database"]["DatabasePass"]
+    #main_node_directory = os.path.dirname(os.path.realpath(__file__))
+    #brise_directory = os.path.dirname(main_node_directory)
+    #local_deployment_path = os.path.join(brise_directory, "deployment_settings", "LocalDeployment.json")
+    #with open(local_deployment_path, "r", encoding="utf-8") as local_deployment_file:
+    #    local_deployment = json.load(local_deployment_file)
+    ##os.environ["BRISE_EVENT_SERVICE_HOST"] = local_deployment["EventService"]["Address"]
+    #os.environ["BRISE_EVENT_SERVICE_HOST"] = "localhost"
+    #os.environ["BRISE_EVENT_SERVICE_AMQP_PORT"] = str(local_deployment["EventService"]["AMQTPort"])
+    #os.environ["BRISE_EVENT_SERVICE_GUI_PORT"] = str(local_deployment["EventService"]["GUIPort"])
+    ##os.environ["BRISE_DATABASE_HOST"] = local_deployment["Database"]["Address"]
+    #os.environ["BRISE_DATABASE_HOST"] = "localhost"
+    #os.environ["BRISE_DATABASE_PORT"] = str(local_deployment["Database"]["Port"])
+    #os.environ["BRISE_DATABASE_NAME"] = local_deployment["Database"]["DatabaseName"]
+    #os.environ["BRISE_DATABASE_USER"] = local_deployment["Database"]["DatabaseUser"]
+    #os.environ["BRISE_DATABASE_PASS"] = local_deployment["Database"]["DatabasePass"]
     run()
