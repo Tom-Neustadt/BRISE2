@@ -1,0 +1,925 @@
+{
+    "Context": {
+        "TaskConfiguration": {
+            "TaskName": "selftesting",
+            "MaxTimeToRunTask": 600,
+            "TimeUnit": "seconds",
+            "Scenario": {
+                "ws_file": "scenarios/self_testing/worker_input.json"
+            },
+            "Objectives": {
+                "new_pairs": {
+                    "Name": "new_pairs",
+                    "DataType": "int",
+                    "Minimization": false,
+                    "MinExpectedValue": 0,
+                    "MaxExpectedValue": 3251
+                }
+            }
+        },
+        "SearchSpace": {
+            "Structure": {
+                "Hierarchical": {}
+            },
+            "Objectives": {
+                "O__one__max": {
+                    "Type": "Category"
+                },
+                "O__one__min": {
+                    "Type": "Category"
+                },
+                "M_thirtyfour_one__twentyseven_four__max": {
+                    "Type": "Category"
+                },
+                "M_one__inf__max": {
+                    "Type": "Category"
+                },
+                "M_inf__hundret__min": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.Objectives.O__one__max",
+                    "Context.SearchSpace.Objectives.O__one__min",
+                    "Context.SearchSpace.Objectives.M_thirtyfour_one__twentyseven_four__max",
+                    "Context.SearchSpace.Objectives.M_one__inf__max",
+                    "Context.SearchSpace.Objectives.M_inf__hundret__min"
+                ],
+                "Default": "Context.SearchSpace.Objectives.O__one__max",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "SearchSpace": {
+                "NonCategorical": {
+                    "Type": "Category"
+                },
+                "Flat": {
+                    "Type": "Category"
+                },
+                "FlatHierarchical": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.SearchSpace.NonCategorical",
+                    "Context.SearchSpace.SearchSpace.Flat",
+                    "Context.SearchSpace.SearchSpace.FlatHierarchical"
+                ],
+                "Default": "Context.SearchSpace.SearchSpace.NonCategorical",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "SamplingStrategy": {
+                "Sobol": {
+                    "Sobol_Seed": {
+                        "0": {
+                            "Type": "Category"
+                        },
+                        "100": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.SamplingStrategy.Sobol.Sobol_Seed.0",
+                            "Context.SearchSpace.SamplingStrategy.Sobol.Sobol_Seed.100"
+                        ],
+                        "Default": "Context.SearchSpace.SamplingStrategy.Sobol.Sobol_Seed.0",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "Type": "Category"
+                },
+                "MersenneTwister": {
+                    "MersenneTwister_Seed": {
+                        "0": {
+                            "Type": "Category"
+                        },
+                        "100": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.SamplingStrategy.MersenneTwister.MersenneTwister_Seed.0",
+                            "Context.SearchSpace.SamplingStrategy.MersenneTwister.MersenneTwister_Seed.100"
+                        ],
+                        "Default": "Context.SearchSpace.SamplingStrategy.MersenneTwister.MersenneTwister_Seed.0",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.SamplingStrategy.Sobol",
+                    "Context.SearchSpace.SamplingStrategy.MersenneTwister"
+                ],
+                "Default": "Context.SearchSpace.SamplingStrategy.Sobol",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "WindowSize": {
+                "0_01": {
+                    "Type": "Category"
+                },
+                "1": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.WindowSize.0_01",
+                    "Context.SearchSpace.WindowSize.1"
+                ],
+                "Default": "Context.SearchSpace.WindowSize.0_01",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "fcard_Surrogate_ConfigurationTransformers": {
+                "0": {
+                    "Type": "Category"
+                },
+                "1": {
+                    "gcard_Surrogate_OrdinalTransformer": {
+                        "0": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_OrdinalTransformer.0",
+                            "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_OrdinalTransformer.1"
+                        ],
+                        "Default": "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_OrdinalTransformer.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "gcard_Surrogate_NominalTransformer": {
+                        "0": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Surrogate_NominalTransformer": {
+                                "BinaryEncoder": {
+                                    "Type": "Category"
+                                },
+                                "SklearnBinaryEncoder": {
+                                    "Type": "Category"
+                                },
+                                "Categories": [
+                                    "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_NominalTransformer.1.Surrogate_NominalTransformer.BinaryEncoder",
+                                    "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_NominalTransformer.1.Surrogate_NominalTransformer.SklearnBinaryEncoder"
+                                ],
+                                "Default": "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_NominalTransformer.1.Surrogate_NominalTransformer.BinaryEncoder",
+                                "Type": "NominalHyperparameter",
+                                "Level": 2
+                            },
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_NominalTransformer.0",
+                            "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_NominalTransformer.1"
+                        ],
+                        "Default": "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_NominalTransformer.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "gcard_Surrogate_IntegerTransformer": {
+                        "0": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_IntegerTransformer.0",
+                            "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_IntegerTransformer.1"
+                        ],
+                        "Default": "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_IntegerTransformer.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "gcard_Surrogate_FloatTransformer": {
+                        "0": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_FloatTransformer.0",
+                            "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_FloatTransformer.1"
+                        ],
+                        "Default": "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1.gcard_Surrogate_FloatTransformer.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.0",
+                    "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1"
+                ],
+                "Default": "Context.SearchSpace.fcard_Surrogate_ConfigurationTransformers.1",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "Surrogate_Instance": {
+                "LinearRegression": {
+                    "Type": "Category"
+                },
+                "GradientBoostingRegressor": {
+                    "n_estimators": {
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "101": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.Surrogate_Instance.GradientBoostingRegressor.n_estimators.1",
+                            "Context.SearchSpace.Surrogate_Instance.GradientBoostingRegressor.n_estimators.101"
+                        ],
+                        "Default": "Context.SearchSpace.Surrogate_Instance.GradientBoostingRegressor.n_estimators.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "Type": "Category"
+                },
+                "BayesianRidgeRegression": {
+                    "max_iter": {
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "101": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.Surrogate_Instance.BayesianRidgeRegression.max_iter.1",
+                            "Context.SearchSpace.Surrogate_Instance.BayesianRidgeRegression.max_iter.101"
+                        ],
+                        "Default": "Context.SearchSpace.Surrogate_Instance.BayesianRidgeRegression.max_iter.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "tol": {
+                        "0_01": {
+                            "Type": "Category"
+                        },
+                        "23_41": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.Surrogate_Instance.BayesianRidgeRegression.tol.0_01",
+                            "Context.SearchSpace.Surrogate_Instance.BayesianRidgeRegression.tol.23_41"
+                        ],
+                        "Default": "Context.SearchSpace.Surrogate_Instance.BayesianRidgeRegression.tol.0_01",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "Type": "Category"
+                },
+                "GaussianProcessRegressor": {
+                    "n_restarts_optimizer": {
+                        "0": {
+                            "Type": "Category"
+                        },
+                        "100": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.Surrogate_Instance.GaussianProcessRegressor.n_restarts_optimizer.0",
+                            "Context.SearchSpace.Surrogate_Instance.GaussianProcessRegressor.n_restarts_optimizer.100"
+                        ],
+                        "Default": "Context.SearchSpace.Surrogate_Instance.GaussianProcessRegressor.n_restarts_optimizer.0",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "Type": "Category"
+                },
+                "ModelMock": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.Surrogate_Instance.LinearRegression",
+                    "Context.SearchSpace.Surrogate_Instance.GradientBoostingRegressor",
+                    "Context.SearchSpace.Surrogate_Instance.BayesianRidgeRegression",
+                    "Context.SearchSpace.Surrogate_Instance.GaussianProcessRegressor",
+                    "Context.SearchSpace.Surrogate_Instance.ModelMock"
+                ],
+                "Default": "Context.SearchSpace.Surrogate_Instance.LinearRegression",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "fcard_Optimizer_ConfigurationTransformers": {
+                "0": {
+                    "Type": "Category"
+                },
+                "1": {
+                    "gcard_Optimizer_OrdinalTransformer": {
+                        "0": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_OrdinalTransformer.0",
+                            "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_OrdinalTransformer.1"
+                        ],
+                        "Default": "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_OrdinalTransformer.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "gcard_Optimizer_NominalTransformer": {
+                        "0": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Optimizer_NominalTransformer": {
+                                "BinaryEncoder": {
+                                    "Type": "Category"
+                                },
+                                "SklearnBinaryEncoder": {
+                                    "Type": "Category"
+                                },
+                                "Categories": [
+                                    "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_NominalTransformer.1.Optimizer_NominalTransformer.BinaryEncoder",
+                                    "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_NominalTransformer.1.Optimizer_NominalTransformer.SklearnBinaryEncoder"
+                                ],
+                                "Default": "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_NominalTransformer.1.Optimizer_NominalTransformer.BinaryEncoder",
+                                "Type": "NominalHyperparameter",
+                                "Level": 2
+                            },
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_NominalTransformer.0",
+                            "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_NominalTransformer.1"
+                        ],
+                        "Default": "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_NominalTransformer.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "gcard_Optimizer_IntegerTransformer": {
+                        "0": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_IntegerTransformer.0",
+                            "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_IntegerTransformer.1"
+                        ],
+                        "Default": "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_IntegerTransformer.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "gcard_Optimizer_FloatTransformer": {
+                        "0": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_FloatTransformer.0",
+                            "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_FloatTransformer.1"
+                        ],
+                        "Default": "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1.gcard_Optimizer_FloatTransformer.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.0",
+                    "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1"
+                ],
+                "Default": "Context.SearchSpace.fcard_Optimizer_ConfigurationTransformers.1",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "fcard_Optimizer_ValueTransformers": {
+                "0": {
+                    "Type": "Category"
+                },
+                "1": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.fcard_Optimizer_ValueTransformers.0",
+                    "Context.SearchSpace.fcard_Optimizer_ValueTransformers.1"
+                ],
+                "Default": "Context.SearchSpace.fcard_Optimizer_ValueTransformers.1",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "Optimizer_Instance": {
+                "RandomSearch": {
+                    "SamplingSize": {
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "101": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.Optimizer_Instance.RandomSearch.SamplingSize.1",
+                            "Context.SearchSpace.Optimizer_Instance.RandomSearch.SamplingSize.101"
+                        ],
+                        "Default": "Context.SearchSpace.Optimizer_Instance.RandomSearch.SamplingSize.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "Type": "Category"
+                },
+                "MOEA": {
+                    "Generations": {
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "101": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.Optimizer_Instance.MOEA.Generations.1",
+                            "Context.SearchSpace.Optimizer_Instance.MOEA.Generations.101"
+                        ],
+                        "Default": "Context.SearchSpace.Optimizer_Instance.MOEA.Generations.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "PopulationSize": {
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "101": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.Optimizer_Instance.MOEA.PopulationSize.1",
+                            "Context.SearchSpace.Optimizer_Instance.MOEA.PopulationSize.101"
+                        ],
+                        "Default": "Context.SearchSpace.Optimizer_Instance.MOEA.PopulationSize.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "gcard_SEA": {
+                        "0": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.Optimizer_Instance.MOEA.gcard_SEA.0",
+                            "Context.SearchSpace.Optimizer_Instance.MOEA.gcard_SEA.1"
+                        ],
+                        "Default": "Context.SearchSpace.Optimizer_Instance.MOEA.gcard_SEA.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "gcard_SGA": {
+                        "0": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.Optimizer_Instance.MOEA.gcard_SGA.0",
+                            "Context.SearchSpace.Optimizer_Instance.MOEA.gcard_SGA.1"
+                        ],
+                        "Default": "Context.SearchSpace.Optimizer_Instance.MOEA.gcard_SGA.1",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.Optimizer_Instance.RandomSearch",
+                    "Context.SearchSpace.Optimizer_Instance.MOEA"
+                ],
+                "Default": "Context.SearchSpace.Optimizer_Instance.RandomSearch",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "ExternalValidator_Split": {
+                "HoldOut": {
+                    "ExternalValidator_TrainingSet": {
+                        "0_5": {
+                            "Type": "Category"
+                        },
+                        "0_9": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.ExternalValidator_Split.HoldOut.ExternalValidator_TrainingSet.0_5",
+                            "Context.SearchSpace.ExternalValidator_Split.HoldOut.ExternalValidator_TrainingSet.0_9"
+                        ],
+                        "Default": "Context.SearchSpace.ExternalValidator_Split.HoldOut.ExternalValidator_TrainingSet.0_5",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "Type": "Category"
+                },
+                "KFold": {
+                    "ExternalValidator_NumberOfFolds": {
+                        "2": {
+                            "Type": "Category"
+                        },
+                        "102": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.ExternalValidator_Split.KFold.ExternalValidator_NumberOfFolds.2",
+                            "Context.SearchSpace.ExternalValidator_Split.KFold.ExternalValidator_NumberOfFolds.102"
+                        ],
+                        "Default": "Context.SearchSpace.ExternalValidator_Split.KFold.ExternalValidator_NumberOfFolds.2",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.ExternalValidator_Split.HoldOut",
+                    "Context.SearchSpace.ExternalValidator_Split.KFold"
+                ],
+                "Default": "Context.SearchSpace.ExternalValidator_Split.HoldOut",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "ExternalValidator_QualityThreshold": {
+                "0": {
+                    "Type": "Category"
+                },
+                "1": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.ExternalValidator_QualityThreshold.0",
+                    "Context.SearchSpace.ExternalValidator_QualityThreshold.1"
+                ],
+                "Default": "Context.SearchSpace.ExternalValidator_QualityThreshold.0",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "fcard_InternalValidator": {
+                "0": {
+                    "Type": "Category"
+                },
+                "1": {
+                    "InternalValidator_Split": {
+                        "KFold": {
+                            "InternalValidator_NumberOfFolds": {
+                                "2": {
+                                    "Type": "Category"
+                                },
+                                "102": {
+                                    "Type": "Category"
+                                },
+                                "Categories": [
+                                    "Context.SearchSpace.fcard_InternalValidator.1.InternalValidator_Split.KFold.InternalValidator_NumberOfFolds.2",
+                                    "Context.SearchSpace.fcard_InternalValidator.1.InternalValidator_Split.KFold.InternalValidator_NumberOfFolds.102"
+                                ],
+                                "Default": "Context.SearchSpace.fcard_InternalValidator.1.InternalValidator_Split.KFold.InternalValidator_NumberOfFolds.2",
+                                "Type": "NominalHyperparameter",
+                                "Level": 2
+                            },
+                            "Type": "Category"
+                        },
+                        "HoldOut": {
+                            "InternalValidator_TrainingSet": {
+                                "0_5": {
+                                    "Type": "Category"
+                                },
+                                "0_9": {
+                                    "Type": "Category"
+                                },
+                                "Categories": [
+                                    "Context.SearchSpace.fcard_InternalValidator.1.InternalValidator_Split.HoldOut.InternalValidator_TrainingSet.0_5",
+                                    "Context.SearchSpace.fcard_InternalValidator.1.InternalValidator_Split.HoldOut.InternalValidator_TrainingSet.0_9"
+                                ],
+                                "Default": "Context.SearchSpace.fcard_InternalValidator.1.InternalValidator_Split.HoldOut.InternalValidator_TrainingSet.0_5",
+                                "Type": "NominalHyperparameter",
+                                "Level": 2
+                            },
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.fcard_InternalValidator.1.InternalValidator_Split.KFold",
+                            "Context.SearchSpace.fcard_InternalValidator.1.InternalValidator_Split.HoldOut"
+                        ],
+                        "Default": "Context.SearchSpace.fcard_InternalValidator.1.InternalValidator_Split.KFold",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "InternalValidator_QualityThreshold": {
+                        "0": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.fcard_InternalValidator.1.InternalValidator_QualityThreshold.0",
+                            "Context.SearchSpace.fcard_InternalValidator.1.InternalValidator_QualityThreshold.1"
+                        ],
+                        "Default": "Context.SearchSpace.fcard_InternalValidator.1.InternalValidator_QualityThreshold.0",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.fcard_InternalValidator.0",
+                    "Context.SearchSpace.fcard_InternalValidator.1"
+                ],
+                "Default": "Context.SearchSpace.fcard_InternalValidator.1",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "CandidateSelector": {
+                "BestMultiPointProposal": {
+                    "Type": "Category"
+                },
+                "RandomMultiPointProposal": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.CandidateSelector.BestMultiPointProposal",
+                    "Context.SearchSpace.CandidateSelector.RandomMultiPointProposal"
+                ],
+                "Default": "Context.SearchSpace.CandidateSelector.BestMultiPointProposal",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "MaxFailedTasksPerConfiguration": {
+                "1": {
+                    "Type": "Category"
+                },
+                "101": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.MaxFailedTasksPerConfiguration.1",
+                    "Context.SearchSpace.MaxFailedTasksPerConfiguration.101"
+                ],
+                "Default": "Context.SearchSpace.MaxFailedTasksPerConfiguration.1",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "QuantityBased_MaxTasksPerConfiguration": {
+                "1": {
+                    "Type": "Category"
+                },
+                "101": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.QuantityBased_MaxTasksPerConfiguration.1",
+                    "Context.SearchSpace.QuantityBased_MaxTasksPerConfiguration.101"
+                ],
+                "Default": "Context.SearchSpace.QuantityBased_MaxTasksPerConfiguration.1",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "StopCondition": {
+                "BadConfigurationBasedSC": {
+                    "Type": "Category"
+                },
+                "TimeBasedSC": {
+                    "Type": "Category"
+                },
+                "EnergyExpreimentSC": {
+                    "Type": "Category"
+                },
+                "GuaranteedSC": {
+                    "Type": "Category"
+                },
+                "QuantityBasedSC": {
+                    "Type": "Category"
+                },
+                "ImprovementBasedSC": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.StopCondition.BadConfigurationBasedSC",
+                    "Context.SearchSpace.StopCondition.TimeBasedSC",
+                    "Context.SearchSpace.StopCondition.EnergyExpreimentSC",
+                    "Context.SearchSpace.StopCondition.GuaranteedSC",
+                    "Context.SearchSpace.StopCondition.QuantityBasedSC",
+                    "Context.SearchSpace.StopCondition.ImprovementBasedSC"
+                ],
+                "Default": "Context.SearchSpace.StopCondition.BadConfigurationBasedSC",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "fcard_DefaultConfigurationHandler": {
+                "0": {
+                    "Type": "Category"
+                },
+                "1": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.fcard_DefaultConfigurationHandler.0",
+                    "Context.SearchSpace.fcard_DefaultConfigurationHandler.1"
+                ],
+                "Default": "Context.SearchSpace.fcard_DefaultConfigurationHandler.1",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            }
+        }
+    },
+    "ConfigurationSelection": {
+        "SamplingStrategy": {
+            "Sobol": {
+                "Seed": 1,
+                "Type": "sobol"
+            }
+        },
+        "Predictor": {
+            "WindowSize": 1.0,
+            "Model_0": {
+                "Surrogate": {
+                    "Instance": {
+                        "MultiArmedBandit": {
+                            "MultiObjective": false,
+                            "Ctype": "std",
+                            "CFloat": 1.0,
+                            "Parameters": {
+                                "c": "std"
+                            },
+                            "Type": "multi_armed_bandit"
+                        }
+                    }
+                },
+                "Optimizer": {
+                    "ConfigurationTransformers": {
+                        "NominalTransformer": {
+                            "SklearnBinaryEncoder": {
+                                "Type": "sklearn_binary_transformer",
+                                "Class": "sklearn.OrdinalEncoder"
+                            }
+                        }
+                    },
+                    "Instance": {
+                        "MOEA": {
+                            "Generations": 5,
+                            "PopulationSize": 10,
+                            "Algorithms": {
+                                "SGA": {
+                                    "MultiObjective": false
+                                }
+                            },
+                            "Type": "moea"
+                        }
+                    }
+                },
+                "Validator": {
+                    "ExternalValidator": {
+                        "MockValidator": {
+                            "Type": "mock_validator"
+                        }
+                    }
+                },
+                "CandidateSelector": {
+                    "BestMultiPointProposal": {
+                        "NumberOfPoints": 1,
+                        "Type": "best_multi_point"
+                    }
+                }
+            },
+            "Model_1": {
+                "Surrogate": {
+                    "Instance": {
+                        "MultiArmedBandit": {
+                            "MultiObjective": false,
+                            "Ctype": "std",
+                            "CFloat": 1.0,
+                            "Parameters": {
+                                "c": "std"
+                            },
+                            "Type": "multi_armed_bandit"
+                        }
+                    }
+                },
+                "Optimizer": {
+                    "ConfigurationTransformers": {
+                        "NominalTransformer": {
+                            "SklearnBinaryEncoder": {
+                                "Type": "sklearn_binary_transformer",
+                                "Class": "sklearn.OrdinalEncoder"
+                            }
+                        }
+                    },
+                    "Instance": {
+                        "MOEA": {
+                            "Generations": 5,
+                            "PopulationSize": 10,
+                            "Algorithms": {
+                                "SGA": {
+                                    "MultiObjective": false
+                                }
+                            },
+                            "Type": "moea"
+                        }
+                    }
+                },
+                "Validator": {
+                    "ExternalValidator": {
+                        "MockValidator": {
+                            "Type": "mock_validator"
+                        }
+                    }
+                },
+                "CandidateSelector": {
+                    "BestMultiPointProposal": {
+                        "NumberOfPoints": 1,
+                        "Type": "best_multi_point"
+                    }
+                }
+            },
+            "Model_2": {
+                "Surrogate": {
+                    "Instance": {
+                        "MultiArmedBandit": {
+                            "MultiObjective": false,
+                            "Ctype": "std",
+                            "CFloat": 1.0,
+                            "Parameters": {
+                                "c": "std"
+                            },
+                            "Type": "multi_armed_bandit"
+                        }
+                    }
+                },
+                "Optimizer": {
+                    "ConfigurationTransformers": {
+                        "NominalTransformer": {
+                            "SklearnBinaryEncoder": {
+                                "Type": "sklearn_binary_transformer",
+                                "Class": "sklearn.OrdinalEncoder"
+                            }
+                        }
+                    },
+                    "Instance": {
+                        "MOEA": {
+                            "Generations": 5,
+                            "PopulationSize": 10,
+                            "Algorithms": {
+                                "SGA": {
+                                    "MultiObjective": false
+                                }
+                            },
+                            "Type": "moea"
+                        }
+                    }
+                },
+                "Validator": {
+                    "ExternalValidator": {
+                        "MockValidator": {
+                            "Type": "mock_validator"
+                        }
+                    }
+                },
+                "CandidateSelector": {
+                    "BestMultiPointProposal": {
+                        "NumberOfPoints": 1,
+                        "Type": "best_multi_point"
+                    }
+                }
+            }
+        }
+    },
+    "RepetitionManager": {
+        "MaxFailedTasksPerConfiguration": 1,
+        "Instance": {
+            "QuantityBased": {
+                "MaxTasksPerConfiguration": 1,
+                "Type": "quantity_based"
+            }
+        }
+    },
+    "StopCondition": {
+        "Instance": {
+            "ImprovementBasedSC": {
+                "Type": "improvement_based",
+                "Name": "improv",
+                "Parameters": {
+                    "MaxConfigsWithoutImprovement": 10
+                }
+            },
+            "QuantityBasedSC": {
+                "Type": "quantity_based",
+                "Name": "quant",
+                "Parameters": {
+                    "MaxConfigs": 20
+                }
+            }
+        },
+        "StopConditionTriggerLogic": {
+            "Expression": "quant and improv",
+            "InspectionParameters": {
+                "RepetitionPeriod": 1,
+                "TimeUnit": "seconds"
+            }
+        }
+    }
+}

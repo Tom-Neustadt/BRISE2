@@ -254,9 +254,9 @@ class Model:
 
         contains_scalarized_surrogate = any([s.scalarized for s in created_surrogates])
         if not contains_scalarized_surrogate:
-            names_and_objectives = [r.name for r in self.region] + [o for o in self.objectives.keys()]
+            names_and_objectives = [r.name for r in self.region] #+ [o for o in self.objectives.keys()]
         else:
-            names_and_objectives = [r.name for r in self.region] + ["Y"]
+            names_and_objectives = [r.name for r in self.region] #+ ["Y"]
 
         selected_candidates = self.candidate_selector.select_candidates(optimized_full[names_and_objectives])
 

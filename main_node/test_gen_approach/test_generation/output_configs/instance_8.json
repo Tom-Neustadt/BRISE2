@@ -1,0 +1,115 @@
+{
+    "Context": {
+        "TaskConfiguration": {
+            "TaskName": "test",
+            "MaxTimeToRunTask": 10,
+            "TimeUnit": "seconds",
+            "Scenario": {},
+            "Objectives": {
+                "Y1": {
+                    "Name": "Y1",
+                    "DataType": "float",
+                    "Minimization": false,
+                    "MinExpectedValue": 0,
+                    "MaxExpectedValue": 1
+                }
+            }
+        },
+        "SearchSpace": {
+            "F1": {
+                "Lower": -123.4,
+                "Upper": 56.7,
+                "Default": 15.3,
+                "Type": "FloatHyperparameter",
+                "Level": 0
+            },
+            "I1": {
+                "Lower": -10,
+                "Upper": 1000,
+                "Default": 100,
+                "Type": "IntegerHyperparameter",
+                "Level": 0
+            },
+            "Structure": {
+                "Flat": {}
+            }
+        }
+    },
+    "ConfigurationSelection": {
+        "SamplingStrategy": {
+            "Sobol": {
+                "Type": "sobol",
+                "Seed": 100
+            }
+        },
+        "Predictor": {
+            "Model": {
+                "Surrogate": {
+                    "Instance": {
+                        "LinearRegression": {
+                            "MultiObjective": false,
+                            "Type": "sklearn_model_wrapper",
+                            "Class": "sklearn.linear_model.LinearRegression"
+                        }
+                    }
+                },
+                "Optimizer": {
+                    "Instance": {
+                        "RandomSearch": {
+                            "MultiObjective": true,
+                            "Type": "random_search",
+                            "SamplingSize": 1
+                        }
+                    }
+                },
+                "Validator": {
+                    "ExternalValidator": {
+                        "QualityValidator": {
+                            "Split": {
+                                "HoldOut": {
+                                    "TrainingSet": 0.9
+                                }
+                            },
+                            "Type": "quality_validator",
+                            "QualityThreshold": 0
+                        }
+                    }
+                },
+                "CandidateSelector": {
+                    "BestMultiPointProposal": {
+                        "NumberOfPoints": 1,
+                        "Type": "best_multi_point"
+                    }
+                }
+            },
+            "WindowSize": 0.01
+        }
+    },
+    "RepetitionManager": {
+        "Instance": {
+            "QuantityBased": {
+                "Type": "quantity_based",
+                "MaxTasksPerConfiguration": 1
+            }
+        },
+        "MaxFailedTasksPerConfiguration": 1
+    },
+    "StopCondition": {
+        "Instance": {
+            "BadConfigurationBasedSC": {
+                "Parameters": {
+                    "MaxBadConfigurations": 5
+                },
+                "Type": "bad_configuration_based",
+                "Name": "b"
+            }
+        },
+        "StopConditionTriggerLogic": {
+            "Expression": "b",
+            "InspectionParameters": {
+                "RepetitionPeriod": 1,
+                "TimeUnit": "seconds"
+            }
+        }
+    }
+}

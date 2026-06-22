@@ -1,0 +1,182 @@
+{
+    "Context": {
+        "TaskConfiguration": {
+            "TaskName": "test",
+            "MaxTimeToRunTask": 10,
+            "TimeUnit": "seconds",
+            "Scenario": {},
+            "Objectives": {
+                "Y1": {
+                    "Name": "Y1",
+                    "DataType": "float",
+                    "Minimization": false,
+                    "MinExpectedValue": -34.1,
+                    "MaxExpectedValue": 27.4
+                }
+            }
+        },
+        "SearchSpace": {
+            "F1": {
+                "Lower": 0.0,
+                "Upper": 890.1,
+                "Default": 15.3,
+                "Type": "FloatHyperparameter",
+                "Level": 0
+            },
+            "I1": {
+                "Lower": 0,
+                "Upper": 1000,
+                "Default": 100,
+                "Type": "IntegerHyperparameter",
+                "Level": 0
+            },
+            "O1": {
+                "O11": {
+                    "Type": "Category"
+                },
+                "O12": {
+                    "Type": "Category"
+                },
+                "O13": {
+                    "Type": "Category"
+                },
+                "O14": {
+                    "Type": "Category"
+                },
+                "O15": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.O1.O11",
+                    "Context.SearchSpace.O1.O12",
+                    "Context.SearchSpace.O1.O13",
+                    "Context.SearchSpace.O1.O14",
+                    "Context.SearchSpace.O1.O15"
+                ],
+                "Default": "Context.SearchSpace.O1.O11",
+                "Type": "OrdinalHyperparameter",
+                "Level": 0
+            },
+            "Structure": {
+                "Flat": {}
+            }
+        }
+    },
+    "ConfigurationSelection": {
+        "SamplingStrategy": {
+            "Sobol": {
+                "Type": "sobol",
+                "Seed": 100
+            }
+        },
+        "Predictor": {
+            "Model": {
+                "Surrogate": {
+                    "Instance": {
+                        "GaussianProcessRegressor": {
+                            "MultiObjective": true,
+                            "Parameters": {
+                                "n_restarts_optimizer": 100
+                            },
+                            "Type": "sklearn_model_wrapper",
+                            "Class": "sklearn.gaussian_process.GaussianProcessRegressor"
+                        }
+                    }
+                },
+                "Optimizer": {
+                    "Instance": {
+                        "MOEA": {
+                            "Algorithms": {
+                                "SEA": {
+                                    "MultiObjective": false
+                                },
+                                "SGA": {
+                                    "MultiObjective": false
+                                }
+                            },
+                            "Type": "moea",
+                            "Generations": 101,
+                            "PopulationSize": 1
+                        }
+                    },
+                    "ValueTransformers": {
+                        "AcquisitionFunction": {
+                            "TPE_EI": {
+                                "Type": "tpe_ei"
+                            }
+                        }
+                    }
+                },
+                "Validator": {
+                    "ExternalValidator": {
+                        "QualityValidator": {
+                            "Split": {
+                                "HoldOut": {
+                                    "TrainingSet": 0.9
+                                }
+                            },
+                            "Type": "quality_validator",
+                            "QualityThreshold": 1
+                        }
+                    },
+                    "InternalValidator": {
+                        "QualityValidator": {
+                            "Split": {
+                                "KFold": {
+                                    "NumberOfFolds": 2
+                                },
+                                "HoldOut": {
+                                    "TrainingSet": 0.9
+                                }
+                            },
+                            "Type": "quality_validator",
+                            "QualityThreshold": 0
+                        }
+                    }
+                },
+                "CandidateSelector": {
+                    "RandomMultiPointProposal": {
+                        "NumberOfPoints": 1,
+                        "Type": "random_multi_point"
+                    }
+                }
+            },
+            "WindowSize": 1
+        }
+    },
+    "RepetitionManager": {
+        "Instance": {
+            "QuantityBased": {
+                "Type": "quantity_based",
+                "MaxTasksPerConfiguration": 1
+            }
+        },
+        "MaxFailedTasksPerConfiguration": 1
+    },
+    "StopCondition": {
+        "Instance": {
+            "GuaranteedSC": {
+                "Type": "guaranteed",
+                "Name": "G"
+            },
+            "QuantityBasedSC": {
+                "Parameters": {
+                    "MaxConfigs": 15
+                },
+                "Type": "quantity_based",
+                "Name": "Q"
+            },
+            "ValidationBasedSC": {
+                "Type": "validation_based",
+                "Name": "V"
+            }
+        },
+        "StopConditionTriggerLogic": {
+            "Expression": "G and Q and V",
+            "InspectionParameters": {
+                "RepetitionPeriod": 1,
+                "TimeUnit": "seconds"
+            }
+        }
+    }
+}

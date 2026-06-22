@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import logging
 
@@ -59,12 +61,15 @@ class MultiArmedBandit(Surrogate):
         # 3. calculate UCB value of each category in every hyperparameter
         for hp in self.region:
             for feature_category in hp.categories:
-                exploration_rate = np.sqrt(
-                    np.divide(
-                        2 * np.log(len(transformed_labels)),
-                        categories_info[hp.name][feature_category]["times used"]
+                with warnings.catch_warnings(record=True, category=RuntimeWarning) as warnings_list:
+                    exploration_rate = np.sqrt(
+                        np.divide(
+                            2 * np.log(len(transformed_labels)),
+                            categories_info[hp.name][feature_category]["times used"]
+                        )
                     )
-                )
+                for warning in warnings_list:
+                    logging.getLogger(__name__).warning(str(warning))
                 if np.isnan(exploration_rate):
                     # only one, but not this category was used (in previous formula nominator=inf and denominator=inf).
                     exploration_rate = np.inf

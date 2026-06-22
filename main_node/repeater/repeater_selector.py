@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import sys
 
 from core_entities.configuration import Configuration
 from repeater.results_check.outliers_detection.outliers_detector_selector import (
@@ -130,6 +131,7 @@ class RepeaterOrchestration:
             result = json.loads(body.decode())
         configuration = Configuration.from_json(result["configuration"])
         if configuration.status['evaluated'] and os.environ.get('TEST_MODE') != 'UNIT_TEST':
+            print(f"Objective values: {str([task_result['result'] for task_result in result["tasks_results"]])}", file=sys.stderr)
             tasks_to_send = result["tasks_to_send"]
             tasks_results = result["tasks_results"]
             for index, objective in enumerate(self._objectives):
@@ -144,11 +146,12 @@ class RepeaterOrchestration:
                     if configuration.is_valid_task(task):
                         configuration.add_task(task)
                         self.database.write_one_record("Task", configuration.get_task_record(task))
+                    else: configuration.increase_failed_tasks_number()
 
                 API().send('new', 'task', configurations=[parameters], results=[task])
 
         # Evaluating configuration
-        if configuration.number_of_failed_tasks <= self.repeater_parameters['MaxFailedTasksPerConfiguration']:
+        if configuration.number_of_failed_tasks < self.repeater_parameters['MaxFailedTasksPerConfiguration']:
             needed_tasks_count = self.evaluation_by_type(configuration)
         else:
             needed_tasks_count = 0
