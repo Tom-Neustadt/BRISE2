@@ -101,9 +101,9 @@ class Predictor:
                                cfg.parameters[considered_parent_hp_name] == considered_activation_category,
                                considered_configs))
                     # filter according to the region
-                    if len(considered_configs) > 0 and considered_parent_hp_name != "root":
-                        logging.info("Considered Configs: " + " ".join([c.__str__() for c in considered_configs]))
-                        logging.info("REGION: " + str(region.__str__()))
+                    #if len(considered_configs) > 0 and considered_parent_hp_name != "root":
+                    #    logging.info("Considered Configs: " + " ".join([c.__str__() for c in considered_configs]))
+                    #    logging.info("REGION: " + str(region.__str__()))
                     considered_configs = list(filter(
                         lambda cfg: any(map(lambda x: x in considered_hp_names_in_region, list(cfg.parameters.keys()))),
                         considered_configs  # Input data for filter

@@ -4,7 +4,6 @@ Main module for running BRISE optimization process."""
 import json
 import logging
 import os
-import sys # TODO: remove when done
 import pickle
 import threading
 from enum import Enum
@@ -76,27 +75,12 @@ class MainThread(threading.Thread):
         self.logger.info("Starting BRISE")
         self.sub.send('log', 'info', message="Starting BRISE")
 
-        # TODO: remove when done
-        #logging.info("os envs for brise: " +
-        #      "\n  evs_host: " + repr(os.getenv("BRISE_EVENT_SERVICE_HOST")) +
-        #      "\n  evs_amqp_port: " + repr(os.getenv("BRISE_EVENT_SERVICE_AMQP_PORT")) +
-        #      "\n  evs_gui_port: " + repr(os.getenv("BRISE_EVENT_SERVICE_GUI_PORT")) +
-        #      "\n  db_host: " + repr(os.getenv("BRISE_DATABASE_HOST")) +
-        #      "\n  db_port: " + repr(os.getenv("BRISE_DATABASE_PORT")) +
-        #      "\n  db_name: " + repr(os.getenv("BRISE_DATABASE_NAME")) +
-        #      "\n  db_user: " + repr(os.getenv("BRISE_DATABASE_USER")) +
-        #      "\n  db_pass: " + repr(os.getenv("BRISE_DATABASE_PASS"))
-        #)
-
         if not self.experiment_setup:
             # Check if main.py running with a specified experiment description file path
             if len(argv) > 1:
                 exp_desc_file_path = argv[1]
             else:
-                # TODO: revert when done
-                #exp_desc_file_path = './Resources/EnergyExperiment/EnergyExperiment.json'
-                #exp_desc_file_path = './Resources/selftesting_instance.json'
-                exp_desc_file_path = './Resources/test_instance_constrained.json'
+                exp_desc_file_path = './Resources/EnergyExperiment/EnergyExperiment.json'
                 log_msg = f"The Experiment Setup was not provided and the path to an experiment file was not specified." \
                           f" The default one will be executed: {exp_desc_file_path}"
                 self.logger.warning(log_msg)
@@ -300,20 +284,4 @@ def run(experiment_setup=None):
 
 
 if __name__ == "__main__":
-    # TODO: remove when done
-    #main_node_directory = os.path.dirname(os.path.realpath(__file__))
-    #brise_directory = os.path.dirname(main_node_directory)
-    #local_deployment_path = os.path.join(brise_directory, "deployment_settings", "LocalDeployment.json")
-    #with open(local_deployment_path, "r", encoding="utf-8") as local_deployment_file:
-    #    local_deployment = json.load(local_deployment_file)
-    ##os.environ["BRISE_EVENT_SERVICE_HOST"] = local_deployment["EventService"]["Address"]
-    #os.environ["BRISE_EVENT_SERVICE_HOST"] = "localhost"
-    #os.environ["BRISE_EVENT_SERVICE_AMQP_PORT"] = str(local_deployment["EventService"]["AMQTPort"])
-    #os.environ["BRISE_EVENT_SERVICE_GUI_PORT"] = str(local_deployment["EventService"]["GUIPort"])
-    ##os.environ["BRISE_DATABASE_HOST"] = local_deployment["Database"]["Address"]
-    #os.environ["BRISE_DATABASE_HOST"] = "localhost"
-    #os.environ["BRISE_DATABASE_PORT"] = str(local_deployment["Database"]["Port"])
-    #os.environ["BRISE_DATABASE_NAME"] = local_deployment["Database"]["DatabaseName"]
-    #os.environ["BRISE_DATABASE_USER"] = local_deployment["Database"]["DatabaseUser"]
-    #os.environ["BRISE_DATABASE_PASS"] = local_deployment["Database"]["DatabasePass"]
     run()

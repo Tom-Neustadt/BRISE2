@@ -35,7 +35,7 @@ class BinaryTransformer(NominalTransformer):
         transformed_features = pd.DataFrame()
 
         for feature_name in relevant_features.columns:
-            categories = [list(filter(lambda p: p.name == feature_name, self.relevant_parameters))[0].categories]
+            categories = [list(filter(lambda p: p.name == feature_name, self.relevant_parameters))[0].enabled_categories]
 
             # create encoder object
             encoder = BinaryEncoder(categories)

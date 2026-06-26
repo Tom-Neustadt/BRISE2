@@ -55,14 +55,11 @@ class Hyperparameter(ABC):
     def __init__(self,
                  name: str,
                  level: int,
-                 disable: str|None = None,
                  parent: Hyperparameter = None,
                  activation_category: _CATEGORY = None):
         self.name = name
         self.configuration_number = 0
         self.level = level  # level within the search space
-        # represeants boolean expression of caregories in DNF
-        self.disable: Constraint | None = Constraint(disable) if disable is not None else None
         self.parent = parent
         self.type = None
         self.activation_category = activation_category  # category activating this parameter
@@ -101,18 +98,16 @@ class Hyperparameter(ABC):
         """
         return self.parent.__eq__(other.parent) and self.activation_category.__eq__(other.activation_category) and self.level == other.level
     
-    def check_enabled(self, configuration: dict[str, _CATEGORY]) -> bool:
-        """
-        Only for constrained Search Space!
-        Check whether current Hyperparameter is enabled based on the provided configuration.
-        :param configuration: mapping of Hyperparameter name to its value.
-        :return: boolean
-        """
-        if self.disable is not None and self.disable.is_satisfied(configuration):
-            return False
-        if self.parent is not None and self.activation_category not in [None, "root"]:
-            return configuration.get(self.parent.name) == self.activation_category
-        return True
+    #def check_enabled(self, configuration: dict[str, _CATEGORY]) -> bool:
+    #    """
+    #    Only for constrained Search Space!
+    #    Check whether current Hyperparameter is enabled based on the provided configuration.
+    #    :param configuration: mapping of Hyperparameter name to its value.
+    #    :return: boolean
+    #    """
+    #    if self.parent is not None and self.activation_category not in [None, "root"]:
+    #        return configuration.get(self.parent.name) == self.activation_category
+    #    return True
 
     #   --- Set of methods to operate the structure of the Search Space
     @abstractmethod
@@ -168,24 +163,23 @@ class CategoricalHyperparameter(Hyperparameter, ABC):
                  level: int,
                  categories: Iterable[_CATEGORY],
                  default_value: _CATEGORY = None,
-                 disable: str|None = None,
                  parent: Hyperparameter = None,
                  activation_category: _CATEGORY = None
                  ):
-        super().__init__(name, level, disable, parent, activation_category)
+        super().__init__(name, level, parent, activation_category)
 
         # Each category could 'activate' children, so list of activated children is 'behind' each category.
         self._categories: MutableMapping[_CATEGORY, List[Hyperparameter]] = OrderedDict({cat: [] for cat in categories})
 
         self._default_value = default_value or list(self._categories)[len(self._categories) // 2]
 
-        self._category_disable: MutableMapping[_CATEGORY, Constraint|None] = OrderedDict({})
+        self._category_disable: MutableMapping[_CATEGORY, Constraint|None] = OrderedDict({cat: None for cat in categories})
         self._category_force: MutableMapping[_CATEGORY, Constraint|None] = OrderedDict({})
-        self.enabled_categories: Set[_CATEGORY] = set(categories)
+        self.enabled_categories: Tuple[_CATEGORY] = categories
 
     @property
     def categories(self):
-        return tuple(self.enabled_categories)
+        return tuple(self._categories.keys())
 
     def add_child_hyperparameter(self,
                                  other: Hyperparameter,
@@ -206,39 +200,31 @@ class CategoricalHyperparameter(Hyperparameter, ABC):
         else:
             self._categories[category].append(other)
 
-    def add_category_constraint(self, category: _CATEGORY, boolean_expression: str, constraint_type: Literal["Disable"]|Literal["Force"] = "Disable"):
+    def add_category_constraint(self, category: _CATEGORY, boolean_expression: str, constraint_type: Literal["Disable", "Force"] = "Disable"):
+        # boolean_expression represents boolean expression of caregories in DNF
         if category not in self._categories:
             raise ValueError(f"{self.name}: category {category} does not exist.")
+        constraint: Constraint = Constraint(boolean_expression)
+        if constraint_type == "Disable":
+            self._category_disable[category] = constraint
+        elif constraint_type == "Force":
+            self._category_force[category] = constraint
         else:
-            constraint: Constraint = Constraint(boolean_expression)
-            if constraint_type == "Disable":
-                self._category_disable[category] = constraint
-            elif constraint_type == "Force":
-                self._category_force[category] = constraint
-            else:
-                raise ValueError(f"{self.name}: constraint type {constraint_type} is not supported. Use 'Disable' or 'Force'.")
+            raise ValueError(f"{self.name}: constraint type {constraint_type} is not supported. Use 'Disable' or 'Force'.")
 
-    def check_enabled(self, configuration: dict[str, _CATEGORY]) -> bool:
+    def restrict_categories(self, configuration: dict[str, _CATEGORY]) -> None:
         """
         Only for constrained Search Space!
-        Check whether current Hyperparameter is enabled based on the provided configuration.
-        Additionaly, adapts enabled categories based on the provided configuration and constraints.
+        Adapts enabled categories based on the provided configuration and constraints.
         :param configuration: mapping of Hyperparameter name to its value.
-        :return: boolean
         """
-        if not super().check_enabled(configuration):
-            return False
         if self._category_force:
             for category, constraint in self._category_force.items():
                 if constraint.is_satisfied(configuration):
-                    self.enabled_categories = {category}
-                    return True
-        self.enabled_categories = set(self._categories.keys())
-        if self._category_disable:
-            for category, constraint in self._category_disable.items():
-                if constraint.is_satisfied(configuration):
-                    self.enabled_categories.discard(category)
-        return True
+                    self.enabled_categories = (category,)
+                    return
+        self.enabled_categories = tuple(cat for cat, constr in self._category_disable.items() 
+                                        if constr is None or not constr.is_satisfied(configuration))
         
 
     def get_children(self) -> List[Hyperparameter]:
@@ -319,7 +305,7 @@ class CategoricalHyperparameter(Hyperparameter, ABC):
             return boundaries
 
     def transform(self, value):
-        categories = list(self.categories)
+        categories = list(self.enabled_categories)
         category_index = round(value * (len(categories) - 1))
         return categories[category_index]
 
@@ -337,10 +323,9 @@ class NumericHyperparameter(Hyperparameter, ABC):
                  lower: Union[int, float],
                  upper: Union[int, float],
                  default_value: Union[int, float] = None,
-                 disable: str|None = None,
                  parent: Hyperparameter = None,
                  activation_category: _CATEGORY = None):
-        super().__init__(name, level, disable, parent, activation_category)
+        super().__init__(name, level, parent, activation_category)
 
         self._lower = lower
         self._upper = upper
@@ -402,11 +387,10 @@ class IntegerHyperparameter(NumericHyperparameter):
                  lower: Union[int, float],
                  upper: Union[int, float],
                  default_value: Union[int, float] = None,
-                 disable: str|None = None,
                  parent: Hyperparameter = None,
                  activation_category: _CATEGORY = None):
         default_value = default_value or (upper - lower) // 2
-        super().__init__(name, level, int(lower), int(upper), default_value, disable, parent, activation_category)
+        super().__init__(name, level, int(lower), int(upper), default_value, parent, activation_category)
         self.type = "Integer"
 
     def get_size(self) -> Union[int, np.inf]:
@@ -430,11 +414,10 @@ class FloatHyperparameter(NumericHyperparameter):
                  lower: Union[int, float],
                  upper: Union[int, float],
                  default_value: Union[int, float] = None,
-                 disable: str|None = None,
                  parent: Hyperparameter = None,
                  activation_category: _CATEGORY = None):
         default_value = default_value or (upper - lower) / 2
-        super().__init__(name, level, float(lower), float(upper), default_value, disable, parent, activation_category)
+        super().__init__(name, level, float(lower), float(upper), default_value, parent, activation_category)
         self.type = "Float"
 
     def get_size(self) -> Union[int, np.inf]:
@@ -456,11 +439,10 @@ class OrdinalHyperparameter(CategoricalHyperparameter):
                  level: int,
                  categories: Iterable[_CATEGORY],
                  default_value: _CATEGORY = None,
-                 disable: str|None = None,
                  parent: Hyperparameter = None,
                  activation_category: _CATEGORY = None
                  ):
-        super().__init__(name, level, categories, default_value, disable, parent, activation_category)
+        super().__init__(name, level, categories, default_value, parent, activation_category)
         self.type = "Ordinal"
 
     def __eq__(self, other: OrdinalHyperparameter):
@@ -486,11 +468,10 @@ class NominalHyperparameter(CategoricalHyperparameter):
                  level: int,
                  categories: Iterable[_CATEGORY],
                  default_value: _CATEGORY = None,
-                 disable: str|None = None,
                  parent: Hyperparameter = None,
                  activation_category: _CATEGORY = None
                  ):
-        super().__init__(name, level, categories, default_value, disable, parent, activation_category)
+        super().__init__(name, level, categories, default_value, parent, activation_category)
         self.type = "Nominal"
 
     def __eq__(self, other: NominalHyperparameter):
@@ -517,6 +498,7 @@ class NominalHyperparameter(CategoricalHyperparameter):
 class Constraint:
     def __init__(self, boolean_expression):
         self.constraint: list[tuple[list[tuple[str, str]], list[tuple[str, str]]]] = []
+        self.boolean_expression = boolean_expression
         self._inner_innit(boolean_expression)
     
     def _inner_innit(self, boolean_expression: str):
@@ -526,16 +508,16 @@ class Constraint:
             if disjunct.startswith("(") and disjunct.endswith(")"):
                 disjunct = disjunct[1:-1].strip()
             if disjunct:
-                conjunct = ([],[])
+                conjuncts = ([],[])
                 for literal in disjunct.split(" && "):
                     literal = literal.strip()
                     if literal.startswith("(") and literal.endswith(")"):
                         literal = literal[1:-1].strip()
                     if literal.startswith("!"):
-                        conjunct[1].append((literal[1:].split(".")[-2], literal[1:]))
+                        conjuncts[1].append((literal[1:].split(".")[-2], literal[1:]))
                     else:
-                        conjunct[0].append((literal.split(".")[-2], literal))
-                self.constraint.append((conjunct))
+                        conjuncts[0].append((literal.split(".")[-2], literal))
+                self.constraint.append(conjuncts)
     
     def is_satisfied(self, parameters: dict[str, _CATEGORY]) -> bool:
         for disjunct in self.constraint:
@@ -553,31 +535,34 @@ class Region(Tuple[Hyperparameter]):
         :param hash_value: hash value to use for the region, should be the same if
             level and activation_category of the contained parameters are the same
     """
-    def __new__(cls, hps: Tuple[Hyperparameter], exclude_indices: list[int] = []):
+    def __new__(cls, hps: Tuple[Hyperparameter], parent: CategoricalHyperparameter = None, activation_category: _CATEGORY = None):
         return super(Region, cls).__new__(cls, hps)
     
-    def __init__(self, hps: Tuple[Hyperparameter], exclude_indices: list[int] = []):
-        #self.full = self
-        self.excluded_indices = exclude_indices
-        #self.reduced = None
-        #if self.exclude_indices:
-        #    self.reduced = self.exclude_indices(exclude_indices)
+    def __init__(self, hps: Tuple[Hyperparameter], parent: CategoricalHyperparameter = None, activation_category: _CATEGORY = None):
+        self.parent = parent
+        self.activation_category = activation_category
 
-    def exclude_indices(self, indices: list[int]):
-        self.excluded_indices = indices
-        #self.reduced = None
-        #self.reduced = tuple(hp for i, hp in enumerate(self) if i not in indices)
+    def is_active(self, configuration: dict):
+        if self.parent is not None and self.activation_category not in [None, "root"]:
+            return configuration.get(self.parent.name) == self.activation_category
+        return True
+    
+    def restrict_hps(self, configuration: dict):
+        for hp in self:
+            if isinstance(hp, CategoricalHyperparameter):
+                hp.restrict_categories(configuration)
+    
+    @property
+    def was_restricted(self):
+        return any(len(hp._categories) > len(hp.enabled_categories) 
+                for hp in self if isinstance(hp, CategoricalHyperparameter))
+    
+    #def get_disabled_categories(self): #TODO delete
+    #    return [(hp.name, [cat for cat in hp.categories if cat not in hp.enabled_categories]) 
+    #            for hp in self if isinstance(hp, CategoricalHyperparameter)]
 
-    #def __iter__(self):
-    #    return iter(self.reduced) if self.reduced is not None else super().__iter__()
-    #
-    #def __hash__(self):
-    #    if self.id is not None:
-    #        return self.id
-    #    return super().__hash__()
-    #
-    #def __eq__(self, other):
-    #    return hash(self) == hash(other)
+    def __repr__(self):
+        return "\n".join(repr(hp) for hp in self)
 
 class SearchSpace:
     def __init__(self, h: dict):
@@ -601,7 +586,7 @@ class SearchSpace:
         else:
             self.current_regions: Set[Tuple[Hyperparameter]] = {Region(hps=(self.search_space_description,))}
         self.current_level = -1
-        self.leftover_regions:dict[int, Set[Region]] = {}
+        self.leftover_regions: dict[int, Set[Region]] = {}
         self.next_level()
 
         self.regions: list[Tuple[Hyperparameter]] = []
@@ -635,17 +620,19 @@ class SearchSpace:
         else:
             for r in self.current_regions:
                 for h in r:
-                    if isinstance(h, CategoricalHyperparameter):
-                        for h_children in h._categories.values():
-                            for child in h_children:
-                                next_region = Region(filter(lambda x: child.level == x.level, h_children))
-                                if child.level == self.current_level + 1:
-                                    children.add(next_region)
-                                else:
-                                    if child.level not in self.leftover_regions:
-                                        self.leftover_regions[child.level] = {next_region}
-                                    else:
-                                        self.leftover_regions[child.level].add(next_region)
+                    if not isinstance(h, CategoricalHyperparameter):
+                        continue
+                    for cat, h_children in h._categories.items():
+                        processed_levels = []
+                        for child in h_children:
+                            if child.level in processed_levels:
+                                continue
+                            processed_levels.append(child.level)
+                            next_region = Region(filter(lambda x: child.level == x.level, h_children), h, cat)
+                            if child.level == self.current_level + 1:
+                                children.add(next_region)
+                            else:
+                                self.leftover_regions.setdefault(child.level, set()).add(next_region)
         self.current_regions = children
         self.current_level += 1
         return self.current_regions
@@ -669,21 +656,15 @@ class SearchSpace:
             # turn parent to dict of hp_name to value (DataFrame has only one row)
             # TODO: rework for multiple predictions
             #   -> rework format "parents" is modified to and the relevant methods recursively called with it
-            #   -> rework how disabled hps and categories and forced categories are handled for multiple predictions at once
+            #   -> rework how disabled categories and forced categories are handled for multiple predictions at once
             if parent.shape[0] != 1:
                 raise ValueError("For now only one configuration can be evaluated at a time for a constrained search space.")
             parent = parent.iloc[0].to_dict()
             available_regions: Set[Region] = self.get_regions_on_current_level()
             activated_regions = set()
             for r in available_regions:
-                exclude_indices = []
-                for i, hp in enumerate(r):
-                    if not hp.check_enabled(parent):
-                        exclude_indices.append(i)
-                if len(exclude_indices) == len(r):
-                    continue
-                if exclude_indices:
-                    r.exclude_indices(exclude_indices)
+                if not r or not r.is_active(parent): continue
+                r.restrict_hps(parent)
                 activated_regions.add(r)
 
         return activated_regions
@@ -770,7 +751,6 @@ class SearchSpace:
         h_name: str = name
         h_type: str = hyperparameter_description["Type"]
         level: int = hyperparameter_description["Level"]
-        disable:  str|None = hyperparameter_description.get("Disable", None)
 
         default_value = hyperparameter_description["Default"]
 
@@ -783,7 +763,6 @@ class SearchSpace:
                                           level=level,
                                           categories=categories,
                                           default_value=default_value,
-                                          disable=disable,
                                           parent=parent,
                                           activation_category=activation_category)
             else:
@@ -791,7 +770,6 @@ class SearchSpace:
                                           level=level,
                                           categories=categories,
                                           default_value=default_value,
-                                          disable=disable,
                                           parent=parent,
                                           activation_category=activation_category)
 
@@ -817,7 +795,6 @@ class SearchSpace:
                                           lower=lower_bound,
                                           upper=upper_bound,
                                           default_value=default_value,
-                                          disable=disable,
                                           parent=parent,
                                           activation_category=activation_category)
             else:
@@ -826,7 +803,6 @@ class SearchSpace:
                                           lower=lower_bound,
                                           upper=upper_bound,
                                           default_value=default_value,
-                                          disable=disable,
                                           parent=parent,
                                           activation_category=activation_category)
 

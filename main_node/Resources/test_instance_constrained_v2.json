@@ -1,0 +1,413 @@
+{
+    "Context": {
+        "TaskConfiguration": {
+            "TaskName": "test",
+            "MaxTimeToRunTask": 10,
+            "TimeUnit": "seconds",
+            "Scenario": {},
+            "Objectives": {
+                "Y1": {
+                    "Name": "Y1",
+                    "DataType": "float",
+                    "Minimization": false,
+                    "MinExpectedValue": 0,
+                    "MaxExpectedValue": 100
+                }
+            }
+        },
+        "SearchSpace": {
+            "Structure": {
+                "Constrained": {}
+            },
+            "X": {
+                "disable_multiples": {
+                    "Type": "Category"
+                },
+                "disable_single": {
+                    "Type": "Category"
+                },
+                "force_single": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.X.disable_multiples",
+                    "Context.SearchSpace.X.disable_single",
+                    "Context.SearchSpace.X.force_single"
+                ],
+                "Default": "Context.SearchSpace.X.disable_single",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "Y": {
+                "use_X": {
+                    "NoneSenseHandler": {
+                        "ignore_nonesensical": {
+                            "Type": "Category"
+                        },
+                        "use_nonesensical": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.Y.use_X.NoneSenseHandler.ignore_nonesensical",
+                            "Context.SearchSpace.Y.use_X.NoneSenseHandler.use_nonesensical"
+                        ],
+                        "Default": "Context.SearchSpace.Y.use_X.NoneSenseHandler.ignore_nonesensical",
+                        "Type": "NominalHyperparameter",
+                        "Level": 1
+                    },
+                    "Type": "Category"
+                },
+                "disable_N": {
+                    "Type": "Category"
+                },
+                "Categories": [
+                    "Context.SearchSpace.Y.use_X",
+                    "Context.SearchSpace.Y.disable_N"
+                ],
+                "Default": "Context.SearchSpace.Y.use_X",
+                "Type": "NominalHyperparameter",
+                "Level": 0
+            },
+            "fcard_N": {
+                "0": {
+                    "Type": "Category"
+                },
+                "1": {
+                    "N_1-N": {
+                        "0_01": {
+                            "Type": "Category",
+                            "Disable": "Context.SearchSpace.Y.use_X.NoneSenseHandler.ignore_nonesensical"
+                        },
+                        "0_5": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.fcard_N.1.N.0_01",
+                            "Context.SearchSpace.fcard_N.1.N.0_5",
+                            "Context.SearchSpace.fcard_N.1.N.1"
+                        ],
+                        "Default": "Context.SearchSpace.fcard_N.1.N.0_5",
+                        "Type": "NominalHyperparameter",
+                        "Level": 2
+                    },
+                    "Type": "Category",
+                    "Disable": "Context.SearchSpace.X.disable_single and Context.SearchSpace.Y.use_X or Context.SearchSpace.Y.disable_N",
+                    "Force": "Context.SearchSpace.Y.use_X and Context.SearchSpace.X.force_single"
+                },
+                "3": {
+                    "N_3-N_0": {
+                        "0_01": {
+                            "Type": "Category",
+                            "Disable": "Context.SearchSpace.Y.use_X.NoneSenseHandler.ignore_nonesensical"
+                        },
+                        "0_5": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.fcard_N.3.N.0_01",
+                            "Context.SearchSpace.fcard_N.3.N.0_5",
+                            "Context.SearchSpace.fcard_N.3.N.1"
+                        ],
+                        "Default": "Context.SearchSpace.fcard_N.3.N.0_5",
+                        "Type": "NominalHyperparameter",
+                        "Level": 3
+                    },
+                    "N_3-N_1": {
+                        "0_01": {
+                            "Type": "Category",
+                            "Disable": "Context.SearchSpace.Y.use_X.NoneSenseHandler.ignore_nonesensical"
+                        },
+                        "0_5": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.fcard_N.3.N.0_01",
+                            "Context.SearchSpace.fcard_N.3.N.0_5",
+                            "Context.SearchSpace.fcard_N.3.N.1"
+                        ],
+                        "Default": "Context.SearchSpace.fcard_N.3.N.0_5",
+                        "Type": "NominalHyperparameter",
+                        "Level": 3
+                    },
+                    "N_3-N_2": {
+                        "0_01": {
+                            "Type": "Category",
+                            "Disable": "Context.SearchSpace.Y.use_X.NoneSenseHandler.ignore_nonesensical"
+                        },
+                        "0_5": {
+                            "Type": "Category"
+                        },
+                        "1": {
+                            "Type": "Category"
+                        },
+                        "Categories": [
+                            "Context.SearchSpace.fcard_N.3.N.0_01",
+                            "Context.SearchSpace.fcard_N.3.N.0_5",
+                            "Context.SearchSpace.fcard_N.3.N.1"
+                        ],
+                        "Default": "Context.SearchSpace.fcard_N.3.N.0_5",
+                        "Type": "NominalHyperparameter",
+                        "Level": 2
+                    },
+                    "Type": "Category",
+                    "Disable": "(Context.SearchSpace.X.disable_multiples and Context.SearchSpace.Y.use_X) or Context.SearchSpace.Y.disable_N"
+                },
+                "Categories": [
+                    "Context.SearchSpace.fcard_N.0",
+                    "Context.SearchSpace.fcard_N.1",
+                    "Context.SearchSpace.fcard_N.3"
+                ],
+                "Default": "Context.SearchSpace.fcard_N.3",
+                "Type": "NominalHyperparameter",
+                "Level": 1
+            }
+        }
+    },
+    "ConfigurationSelection": {
+        "SamplingStrategy": {
+            "Sobol": {
+                "Seed": 1,
+                "Type": "sobol"
+            }
+        },
+        "Predictor": {
+            "WindowSize": 1.0,
+            "Model_0": {
+                "Surrogate": {
+                    "Instance": {
+                        "MultiArmedBandit": {
+                            "MultiObjective": false,
+                            "Ctype": "std",
+                            "CFloat": 1.0,
+                            "Parameters": {
+                                "c": "std"
+                            },
+                            "Type": "multi_armed_bandit"
+                        }
+                    }
+                },
+                "Optimizer": {
+                    "ConfigurationTransformers": {
+                        "NominalTransformer": {
+                            "SklearnBinaryEncoder": {
+                                "Type": "sklearn_binary_transformer",
+                                "Class": "sklearn.OrdinalEncoder"
+                            }
+                        }
+                    },
+                    "Instance": {
+                        "MOEA": {
+                            "Generations": 3,
+                            "PopulationSize": 5,
+                            "Algorithms": {
+                                "SGA": {
+                                    "MultiObjective": false
+                                }
+                            },
+                            "Type": "moea"
+                        }
+                    }
+                },
+                "Validator": {
+                    "ExternalValidator": {
+                        "MockValidator": {
+                            "Type": "mock_validator"
+                        }
+                    }
+                },
+                "CandidateSelector": {
+                    "BestMultiPointProposal": {
+                        "NumberOfPoints": 1,
+                        "Type": "best_multi_point"
+                    }
+                }
+            },
+            "Model_1": {
+                "Surrogate": {
+                    "Instance": {
+                        "MultiArmedBandit": {
+                            "MultiObjective": false,
+                            "Ctype": "std",
+                            "CFloat": 1.0,
+                            "Parameters": {
+                                "c": "std"
+                            },
+                            "Type": "multi_armed_bandit"
+                        }
+                    }
+                },
+                "Optimizer": {
+                    "ConfigurationTransformers": {
+                        "NominalTransformer": {
+                            "SklearnBinaryEncoder": {
+                                "Type": "sklearn_binary_transformer",
+                                "Class": "sklearn.OrdinalEncoder"
+                            }
+                        }
+                    },
+                    "Instance": {
+                        "MOEA": {
+                            "Generations": 3,
+                            "PopulationSize": 5,
+                            "Algorithms": {
+                                "SGA": {
+                                    "MultiObjective": false
+                                }
+                            },
+                            "Type": "moea"
+                        }
+                    }
+                },
+                "Validator": {
+                    "ExternalValidator": {
+                        "MockValidator": {
+                            "Type": "mock_validator"
+                        }
+                    }
+                },
+                "CandidateSelector": {
+                    "BestMultiPointProposal": {
+                        "NumberOfPoints": 1,
+                        "Type": "best_multi_point"
+                    }
+                }
+            },
+            "Model_2": {
+                "Surrogate": {
+                    "Instance": {
+                        "MultiArmedBandit": {
+                            "MultiObjective": false,
+                            "Ctype": "std",
+                            "CFloat": 1.0,
+                            "Parameters": {
+                                "c": "std"
+                            },
+                            "Type": "multi_armed_bandit"
+                        }
+                    }
+                },
+                "Optimizer": {
+                    "ConfigurationTransformers": {
+                        "NominalTransformer": {
+                            "SklearnBinaryEncoder": {
+                                "Type": "sklearn_binary_transformer",
+                                "Class": "sklearn.OrdinalEncoder"
+                            }
+                        }
+                    },
+                    "Instance": {
+                        "MOEA": {
+                            "Generations": 3,
+                            "PopulationSize": 5,
+                            "Algorithms": {
+                                "SGA": {
+                                    "MultiObjective": false
+                                }
+                            },
+                            "Type": "moea"
+                        }
+                    }
+                },
+                "Validator": {
+                    "ExternalValidator": {
+                        "MockValidator": {
+                            "Type": "mock_validator"
+                        }
+                    }
+                },
+                "CandidateSelector": {
+                    "BestMultiPointProposal": {
+                        "NumberOfPoints": 1,
+                        "Type": "best_multi_point"
+                    }
+                }
+            },
+            "Model_3": {
+                "Surrogate": {
+                    "Instance": {
+                        "MultiArmedBandit": {
+                            "MultiObjective": false,
+                            "Ctype": "std",
+                            "CFloat": 1.0,
+                            "Parameters": {
+                                "c": "std"
+                            },
+                            "Type": "multi_armed_bandit"
+                        }
+                    }
+                },
+                "Optimizer": {
+                    "ConfigurationTransformers": {
+                        "NominalTransformer": {
+                            "SklearnBinaryEncoder": {
+                                "Type": "sklearn_binary_transformer",
+                                "Class": "sklearn.OrdinalEncoder"
+                            }
+                        }
+                    },
+                    "Instance": {
+                        "MOEA": {
+                            "Generations": 3,
+                            "PopulationSize": 5,
+                            "Algorithms": {
+                                "SGA": {
+                                    "MultiObjective": false
+                                }
+                            },
+                            "Type": "moea"
+                        }
+                    }
+                },
+                "Validator": {
+                    "ExternalValidator": {
+                        "MockValidator": {
+                            "Type": "mock_validator"
+                        }
+                    }
+                },
+                "CandidateSelector": {
+                    "BestMultiPointProposal": {
+                        "NumberOfPoints": 1,
+                        "Type": "best_multi_point"
+                    }
+                }
+            }
+        }
+    },
+    "RepetitionManager": {
+        "MaxFailedTasksPerConfiguration": 1,
+        "Instance": {
+            "QuantityBased": {
+                "MaxTasksPerConfiguration": 1,
+                "Type": "quantity_based"
+            }
+        }
+    },
+    "StopCondition": {
+        "Instance": {
+            "QuantityBasedSC": {
+                "Type": "quantity_based",
+                "Name": "quant",
+                "Parameters": {
+                    "MaxConfigs": 10
+                }
+            }
+        },
+        "StopConditionTriggerLogic": {
+            "Expression": "quant",
+            "InspectionParameters": {
+                "RepetitionPeriod": 1,
+                "TimeUnit": "seconds"
+            }
+        }
+    }
+}
