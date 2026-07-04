@@ -222,7 +222,7 @@ class CategoricalHyperparameter(Hyperparameter, ABC):
             for category, constraint in self._category_force.items():
                 if constraint.is_satisfied(configuration):
                     self.enabled_categories = (category,)
-                    return
+                    return # only the first encountered true force condition is used. force conditions should never overlap!
         self.enabled_categories = tuple(cat for cat, constr in self._category_disable.items() 
                                         if constr is None or not constr.is_satisfied(configuration))
         
@@ -562,7 +562,7 @@ class Region(Tuple[Hyperparameter]):
     #            for hp in self if isinstance(hp, CategoricalHyperparameter)]
 
     def __repr__(self):
-        return "\n".join(repr(hp) for hp in self)
+        return "(" + ",\n".join(repr(hp) for hp in self) + ")"
 
 class SearchSpace:
     def __init__(self, h: dict):
@@ -609,14 +609,14 @@ class SearchSpace:
         self.next_level()
 
     def next_level(self):
-        children: Set[Tuple[Hyperparameter]] = self.leftover_regions.get(self.current_level + 1) or set()
+        next_regions: Set[Tuple[Hyperparameter]] = self.leftover_regions.get(self.current_level + 1) or set()
         if not self.has_constraints:
             for r in self.current_regions:
                 for h in r:
                     if isinstance(h, CategoricalHyperparameter):
                         for h_children in h._categories.values():
                             if h_children:
-                                children.add(tuple(h_children))
+                                next_regions.add(tuple(h_children))
         else:
             for r in self.current_regions:
                 for h in r:
@@ -630,10 +630,10 @@ class SearchSpace:
                             processed_levels.append(child.level)
                             next_region = Region(filter(lambda x: child.level == x.level, h_children), h, cat)
                             if child.level == self.current_level + 1:
-                                children.add(next_region)
+                                next_regions.add(next_region)
                             else:
                                 self.leftover_regions.setdefault(child.level, set()).add(next_region)
-        self.current_regions = children
+        self.current_regions = next_regions
         self.current_level += 1
         return self.current_regions
 

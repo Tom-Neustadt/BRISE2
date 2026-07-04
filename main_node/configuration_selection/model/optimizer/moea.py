@@ -57,9 +57,13 @@ class MOEA(Optimizer):
                     self.original_bounds[0].append(min(transformed_variants[c]))
                     self.original_bounds[1].append(max(transformed_variants[c]))
                     self.original_params.append(c)
+        self.bounds: Tuple[List, List] = self.original_bounds
+        self.params: List[str] = self.original_params
+        self.masked_params: Dict[str: Tuple[float, int]] = self.original_masked_params
 
     def optimize(self, surrogate: Surrogate) -> pd.DataFrame:
-        if isinstance(self.region, Region) and self.region.was_restricted: # constrained search space
+        if isinstance(self.region, Region): # and self.region.was_restricted: # constrained search space
+            # TODO find way to not do all this if a param is unrestricted (need to save original fitting of Conf. Transformers/Encoders)
             self.bounds: Tuple[List, List] = ([], [])
             self.params: List[str] = []
             self.masked_params: Dict[str: Tuple[float, int]] = {}
@@ -79,10 +83,6 @@ class MOEA(Optimizer):
                     self.bounds[0].append(self.original_bounds[0][len(self.bounds)])
                     self.bounds[1].append(self.original_bounds[1][len(self.bounds)])
                     self.params.append(self.original_params[len(self.params)])
-        else:
-            self.bounds: Tuple[List, List] = self.original_bounds
-            self.params: List[str] = self.original_params
-            self.masked_params: Dict[str: Tuple[float, int]] = self.original_masked_params
 
         problem = self._PygmoProblem(optimizer=self, surrogate=surrogate)
         population = pg.population(problem, self.pop_size)
