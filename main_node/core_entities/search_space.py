@@ -7,6 +7,8 @@ from typing import Dict, Iterable, List, Literal, Set, MutableMapping, Union, Tu
 import numpy as np
 import pandas as pd
 
+from constraint import Constraint, ConstraintParser
+
 _CATEGORY = Union[str, int, float, bool]
 
 
@@ -204,7 +206,10 @@ class CategoricalHyperparameter(Hyperparameter, ABC):
         # boolean_expression represents boolean expression of caregories in DNF
         if category not in self._categories:
             raise ValueError(f"{self.name}: category {category} does not exist.")
-        constraint: Constraint = Constraint(boolean_expression)
+        try:
+            constraint: Constraint = ConstraintParser(boolean_expression).parse()
+        except ValueError as e:
+            raise ValueError(f"Error while parsing {constraint_type} constraint of category {category} of parameter {self.name}: {e.args[0]}")
         if constraint_type == "Disable":
             self._category_disable[category] = constraint
         elif constraint_type == "Force":
@@ -495,46 +500,39 @@ class NominalHyperparameter(CategoricalHyperparameter):
     def __hash__(self):
         return super.__hash__(self)
 
-class Constraint:
-    def __init__(self, boolean_expression):
-        self.constraint: list[tuple[list[tuple[str, str]], list[tuple[str, str]]]] = []
-        self.boolean_expression = boolean_expression
-        self._inner_innit(boolean_expression)
-    
-    def _inner_innit(self, boolean_expression: str):
-        boolean_expression = boolean_expression.replace(" and ", " && ").replace(" or ", " || ").replace(" not ", " !")
-        for disjunct in boolean_expression.split(" || "):
-            disjunct = disjunct.strip()
-            if disjunct.startswith("(") and disjunct.endswith(")"):
-                disjunct = disjunct[1:-1].strip()
-            if disjunct:
-                conjuncts = ([],[])
-                for literal in disjunct.split(" && "):
-                    literal = literal.strip()
-                    if literal.startswith("(") and literal.endswith(")"):
-                        literal = literal[1:-1].strip()
-                    if literal.startswith("!"):
-                        conjuncts[1].append((literal[1:].split(".")[-2], literal[1:]))
-                    else:
-                        conjuncts[0].append((literal.split(".")[-2], literal))
-                self.constraint.append(conjuncts)
-    
-    def is_satisfied(self, parameters: dict[str, _CATEGORY]) -> bool:
-        for disjunct in self.constraint:
-            if all(parameters.get(literal[0]) == literal[1] for literal in disjunct[0]) and \
-                      not any(parameters.get(literal[0]) == literal[1] for literal in disjunct[1]):
-                return True
-        return False
+#class Constraint:
+#    def __init__(self, boolean_expression):
+#        self.expression = ConstraintParser(boolean_expression).
+#        self.constraint: list[tuple[list[tuple[str, str]], list[tuple[str, str]]]] = []
+#        self.boolean_expression = boolean_expression
+#        self._inner_innit(boolean_expression)
+#
+#    def _inner_innit(self, boolean_expression: str):
+#        boolean_expression = boolean_expression.replace(" and ", " && ").replace(" or ", " || ").replace(" not ", " !")
+#        for disjunct in boolean_expression.split(" || "):
+#            disjunct = disjunct.strip()
+#            if disjunct.startswith("(") and disjunct.endswith(")"):
+#                disjunct = disjunct[1:-1].strip()
+#            if disjunct:
+#                conjuncts = ([],[])
+#                for literal in disjunct.split(" && "):
+#                    literal = literal.strip()
+#                    if literal.startswith("(") and literal.endswith(")"):
+#                        literal = literal[1:-1].strip()
+#                    if literal.startswith("!"):
+#                        conjuncts[1].append((literal[1:].split(".")[-2], literal[1:]))
+#                    else:
+#                        conjuncts[0].append((literal.split(".")[-2], literal))
+#                self.constraint.append(conjuncts)
+#    
+#    def is_satisfied(self, parameters: dict[str, _CATEGORY]) -> bool:
+#        for disjunct in self.constraint:
+#            if all(parameters.get(literal[0]) == literal[1] for literal in disjunct[0]) and \
+#                      not any(parameters.get(literal[0]) == literal[1] for literal in disjunct[1]):
+#                return True
+#        return False
     
 class Region(Tuple[Hyperparameter]):
-    """Changes __hash__() of region, because Predictor.mapping_region_model and 
-        Predictor.mapping_region_sampling_strategy are dicts with region as key, 
-        and if the parameters in region change(because of constraints) 
-        we need to still recognize the region as the same(needs same hash)!
-        :param hps: Hyperparameters in the region
-        :param hash_value: hash value to use for the region, should be the same if
-            level and activation_category of the contained parameters are the same
-    """
     def __new__(cls, hps: Tuple[Hyperparameter], parent: CategoricalHyperparameter = None, activation_category: _CATEGORY = None):
         return super(Region, cls).__new__(cls, hps)
     
