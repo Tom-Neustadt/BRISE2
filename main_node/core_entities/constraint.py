@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import re
 from typing import Protocol
 
 
@@ -39,7 +40,8 @@ class ConstraintParser:
 
     @staticmethod
     def tokenize(text: str) -> list[str]:
-        text = text.replace(" and ", "&&").replace(" or ", "||").replace(" not ", "!")
+        text = text.replace(" and ", " && ").replace(" or ", " || ") #.replace(" not ", "!")
+        text = re.sub(r"(\s|\(|^)not(\s|\()", r"\1!\2", text)
         tokens = []
         i = 0
         while i < len(text):
@@ -134,5 +136,5 @@ class ConstraintParser:
             raise ValueError(f"Unexpected token: {token!r}")
 
         self.consume()
-        _, param, value = token.rsplit(".", 2)
+        *_, param, value = token.rsplit(".", 2)
         return Variable(param, value)

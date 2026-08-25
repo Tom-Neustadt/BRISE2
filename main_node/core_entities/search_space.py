@@ -7,7 +7,7 @@ from typing import Dict, Iterable, List, Literal, Set, MutableMapping, Union, Tu
 import numpy as np
 import pandas as pd
 
-from constraint import Constraint, ConstraintParser
+from core_entities.constraint import Constraint, ConstraintParser
 
 _CATEGORY = Union[str, int, float, bool]
 
@@ -206,10 +206,10 @@ class CategoricalHyperparameter(Hyperparameter, ABC):
         # boolean_expression represents boolean expression of caregories in DNF
         if category not in self._categories:
             raise ValueError(f"{self.name}: category {category} does not exist.")
-        try:
-            constraint: Constraint = ConstraintParser(boolean_expression).parse()
-        except ValueError as e:
-            raise ValueError(f"Error while parsing {constraint_type} constraint of category {category} of parameter {self.name}: {e.args[0]}")
+        #try:
+        constraint: Constraint = ConstraintParser(boolean_expression).parse()
+        #except ValueError as e:
+        #    raise ValueError(f"Error while parsing {constraint_type} constraint of category {category} of parameter {self.name}: {e.args[0]}")
         if constraint_type == "Disable":
             self._category_disable[category] = constraint
         elif constraint_type == "Force":
